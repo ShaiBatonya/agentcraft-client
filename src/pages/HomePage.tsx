@@ -6,7 +6,7 @@ import { CTASection } from '@/sections/CTASection';
 
 export const HomePage: React.FC = () => {
   return (
-    <div className="overflow-hidden">
+    <div className="w-full">
       <HeroSection />
       <StatsSection />
       <FeaturesSection />

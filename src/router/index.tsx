@@ -9,35 +9,38 @@ const ChatPage = lazy(() => import('../features/chat').then(module => ({ default
 
 // Loading component
 const LoadingSpinner = () => (
-    <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-    </div>
+  <div className="flex items-center justify-center h-64">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-500 border-t-transparent" />
+  </div>
+);
+
+// Wrapper component for MainLayout
+const LayoutWrapper = ({ children }: { children: React.ReactNode }) => (
+  <MainLayout>{children}</MainLayout>
 );
 
 // Router configuration
 export const router = createBrowserRouter([
-    {
-        path: '/',
-        element: <MainLayout />,
-        children: [
-            {
-                index: true,
-                element: (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <HomePage />
-                    </Suspense>
-                ),
-            },
-            {
-                path: 'chat',
-                element: (
-                    <Suspense fallback={<LoadingSpinner />}>
-                        <div className="h-[calc(100vh-8rem)]">
-                            <ChatPage />
-                        </div>
-                    </Suspense>
-                ),
-            },
-        ],
-    },
+  {
+    path: '/',
+    element: (
+      <LayoutWrapper>
+        <Suspense fallback={<LoadingSpinner />}>
+          <HomePage />
+        </Suspense>
+      </LayoutWrapper>
+    ),
+  },
+  {
+    path: '/chat',
+    element: (
+      <LayoutWrapper>
+        <Suspense fallback={<LoadingSpinner />}>
+          <div className="min-h-[calc(100vh-8rem)]">
+            <ChatPage />
+          </div>
+        </Suspense>
+      </LayoutWrapper>
+    ),
+  },
 ]); 
