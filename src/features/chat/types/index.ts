@@ -8,15 +8,18 @@ export interface ChatResponse {
   response: string;
 }
 
-export interface ChatMessage {
+export interface Message {
   id: string;
-  type: 'user' | 'assistant';
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
 
+// Keep legacy alias for compatibility
+export type ChatMessage = Message;
+
 export interface ChatState {
-  messages: ChatMessage[];
+  messages: Message[];
   isLoading: boolean;
   error: string | null;
 } 

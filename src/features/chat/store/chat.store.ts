@@ -1,11 +1,14 @@
 // Zustand store for chat state management
 import { create } from 'zustand';
-import type { ChatMessage, ChatState } from '../types';
+import type { Message, ChatState } from '../types';
 import { ChatService } from '../services/chat.service';
 
 interface ChatActions {
   sendMessage: (prompt: string) => Promise<void>;
   clearMessages: () => void;
+  clearChat: () => void;
+  clearError: () => void;
+  setMessages: (messages: Message[]) => void;
   setError: (error: string | null) => void;
 }
 
@@ -17,9 +20,9 @@ export const useChatStore = create<ChatState & ChatActions>((set) => ({
 
   // Actions
   sendMessage: async (prompt: string) => {
-    const userMessage: ChatMessage = {
+    const userMessage: Message = {
       id: crypto.randomUUID(),
-      type: 'user',
+      role: 'user',
       content: prompt,
       timestamp: new Date(),
     };
@@ -34,9 +37,9 @@ export const useChatStore = create<ChatState & ChatActions>((set) => ({
     try {
       const response = await ChatService.sendMessage({ prompt });
       
-      const assistantMessage: ChatMessage = {
+      const assistantMessage: Message = {
         id: crypto.randomUUID(),
-        type: 'assistant',
+        role: 'assistant',
         content: response.response,
         timestamp: new Date(),
       };
@@ -56,6 +59,18 @@ export const useChatStore = create<ChatState & ChatActions>((set) => ({
 
   clearMessages: () => {
     set({ messages: [], error: null });
+  },
+
+  clearChat: () => {
+    set({ messages: [], error: null });
+  },
+
+  clearError: () => {
+    set({ error: null });
+  },
+
+  setMessages: (messages: Message[]) => {
+    set({ messages });
   },
 
   setError: (error: string | null) => {
