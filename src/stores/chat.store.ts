@@ -178,7 +178,7 @@ export const useChatStore = create<ChatStore>()(
       updateMessage: (messageId: string, updates: Partial<Message>) => {
         set(state => {
           if (state.currentSession) {
-            const messageIndex = state.currentSession.messages.findIndex(m => m.id === messageId);
+            const messageIndex = state.currentSession.messages.findIndex((m: Message) => m.id === messageId);
             if (messageIndex !== -1) {
               Object.assign(state.currentSession.messages[messageIndex], updates);
             }
@@ -189,7 +189,7 @@ export const useChatStore = create<ChatStore>()(
       removeMessage: (messageId: string) => {
         set(state => {
           if (state.currentSession) {
-            state.currentSession.messages = state.currentSession.messages.filter(m => m.id !== messageId);
+            state.currentSession.messages = state.currentSession.messages.filter((m: Message) => m.id !== messageId);
           }
         });
       },
