@@ -1,23 +1,23 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
   loading?: boolean;
+  icon?: React.ReactNode;
 }
 
 const variants = {
-  primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 dark:bg-primary-500 dark:hover:bg-primary-600',
-  secondary: 'bg-neutral-600 text-white hover:bg-neutral-700 focus:ring-neutral-500 dark:bg-neutral-500 dark:hover:bg-neutral-600',
-  outline: 'border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 focus:ring-primary-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700',
-  ghost: 'text-neutral-700 hover:bg-neutral-100 focus:ring-primary-500 dark:text-neutral-300 dark:hover:bg-neutral-800',
+  primary: 'btn-primary',
+  outline: 'btn-outline',
+  ghost: 'bg-transparent text-muted-400 hover:text-white hover:bg-muted-900 transition-all duration-200',
 };
 
 const sizes = {
-  sm: 'px-3 py-2 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
+  sm: 'px-4 py-2 text-caption-1 min-h-[36px]',
+  md: 'px-6 py-3 text-body-2 min-h-[44px]',
+  lg: 'px-8 py-4 text-body-1 min-h-[52px]',
 };
 
 export const Button: React.FC<ButtonProps> = ({
@@ -25,6 +25,7 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'md',
   children,
   loading = false,
+  icon,
   className = '',
   disabled,
   ...props
@@ -34,11 +35,10 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       className={`
-        inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200
-        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-neutral-900
-        disabled:opacity-50 disabled:cursor-not-allowed
         ${variants[variant]}
         ${sizes[size]}
+        focus-ring
+        disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
       `}
       disabled={isDisabled}
@@ -47,6 +47,7 @@ export const Button: React.FC<ButtonProps> = ({
       {loading && (
         <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
       )}
+      {!loading && icon && icon}
       {children}
     </button>
   );
