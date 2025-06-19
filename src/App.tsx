@@ -24,7 +24,7 @@ const AppLoadingScreen = ({ message = 'Initializing application...' }: { message
         <div className="space-y-3">
           <h1 className="text-2xl font-bold text-white">AgentCraft</h1>
           <div className="flex items-center justify-center gap-3">
-            <LoadingSpinner size="sm" variant="primary" />
+            <LoadingSpinner size="sm" variant="accent" />
             <p className="text-white/60 text-sm">{message}</p>
           </div>
         </div>

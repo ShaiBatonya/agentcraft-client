@@ -219,6 +219,53 @@ export const apiService = {
       return response;
     },
 
+    async getHistory(params?: {
+      userId?: string;
+      limit?: number;
+      before?: Date;
+      after?: Date;
+    }): Promise<ApiResponse<{ messages: Record<string, unknown>[]; total: number; hasMore: boolean }>> {
+      console.log('🔄 API Service: Getting chat history:', params);
+      
+      const searchParams = new URLSearchParams();
+      if (params?.limit) searchParams.set('limit', params.limit.toString());
+      if (params?.before) searchParams.set('before', params.before.toISOString());
+      if (params?.after) searchParams.set('after', params.after.toISOString());
+      if (params?.userId) searchParams.set('userId', params.userId);
+
+      const response = await apiClient.get<ApiResponse<{ 
+        messages: Record<string, unknown>[]; 
+        total: number; 
+        hasMore: boolean 
+      }>>(
+        `/chat/history?${searchParams}`
+      );
+      
+      console.log('✅ API Service: Chat history response received:', response);
+      return response;
+    },
+
+    async saveMessage(message: {
+      id: string;
+      role: 'user' | 'assistant';
+      content: string;
+      timestamp: Date;
+      userId?: string;
+    }): Promise<ApiResponse<{ id: string; saved: boolean }>> {
+      console.log('🔄 API Service: Saving message:', message.id);
+      
+      const response = await apiClient.post<ApiResponse<{ id: string; saved: boolean }>>('/chat/message', {
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        timestamp: message.timestamp.toISOString(),
+        userId: message.userId,
+      });
+      
+      console.log('✅ API Service: Message save response:', response);
+      return response;
+    },
+
     async getSessions(params?: {
       page?: number;
       limit?: number;

@@ -1,88 +1,182 @@
 import React from 'react';
+import { cn } from '@/shared/utils';
 
 interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  variant?: 'primary' | 'secondary' | 'white';
-  message?: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'default' | 'white' | 'accent' | 'gradient' | 'dots' | 'pulse';
   className?: string;
-  fullScreen?: boolean;
+  label?: string;
 }
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'md',
-  variant = 'primary',
-  message,
+  variant = 'default',
   className = '',
-  fullScreen = false,
+  label = 'Loading...',
 }) => {
-  const getSizeClasses = () => {
-    switch (size) {
-      case 'sm':
-        return 'w-4 h-4';
-      case 'md':
-        return 'w-6 h-6';
-      case 'lg':
-        return 'w-8 h-8';
-      case 'xl':
-        return 'w-12 h-12';
-      default:
-        return 'w-6 h-6';
-    }
+  const sizeClasses = {
+    xs: 'w-3 h-3',
+    sm: 'w-4 h-4',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8',
+    xl: 'w-12 h-12',
   };
 
-  const getVariantClasses = () => {
+  const baseSpinnerClasses = 'animate-spin rounded-full border-2';
+
+  // Render different spinner variants
+  const renderSpinner = () => {
     switch (variant) {
-      case 'primary':
-        return 'border-accent-500/30 border-t-accent-500';
-      case 'secondary':
-        return 'border-white/30 border-t-white';
       case 'white':
-        return 'border-white/30 border-t-white';
+        return (
+          <div
+            className={cn(
+              baseSpinnerClasses,
+              'border-white/30 border-t-white',
+              sizeClasses[size],
+              className
+            )}
+            aria-hidden="true"
+          />
+        );
+
+      case 'accent':
+        return (
+          <div
+            className={cn(
+              baseSpinnerClasses,
+              'border-accent-500/30 border-t-accent-500',
+              sizeClasses[size],
+              className
+            )}
+            aria-hidden="true"
+          />
+        );
+
+      case 'gradient':
+        return (
+          <div className={cn('relative', sizeClasses[size], className)}>
+            <div
+              className={cn(
+                baseSpinnerClasses,
+                'border-transparent border-t-accent-500',
+                sizeClasses[size]
+              )}
+              aria-hidden="true"
+            />
+            <div
+              className={cn(
+                'absolute inset-0 rounded-full bg-gradient-to-r from-accent-500 via-purple-500 to-pink-500 opacity-20 animate-pulse',
+                sizeClasses[size]
+              )}
+              aria-hidden="true"
+            />
+          </div>
+        );
+
+      case 'dots':
+        return (
+          <div className={cn('flex gap-1', className)} aria-hidden="true">
+            <div
+              className={cn(
+                'rounded-full bg-accent-500 animate-bounce',
+                size === 'xs' ? 'w-1 h-1' :
+                size === 'sm' ? 'w-1.5 h-1.5' :
+                size === 'md' ? 'w-2 h-2' :
+                size === 'lg' ? 'w-2.5 h-2.5' : 'w-3 h-3'
+              )}
+              style={{ animationDelay: '0ms' }}
+            />
+            <div
+              className={cn(
+                'rounded-full bg-accent-500 animate-bounce',
+                size === 'xs' ? 'w-1 h-1' :
+                size === 'sm' ? 'w-1.5 h-1.5' :
+                size === 'md' ? 'w-2 h-2' :
+                size === 'lg' ? 'w-2.5 h-2.5' : 'w-3 h-3'
+              )}
+              style={{ animationDelay: '150ms' }}
+            />
+            <div
+              className={cn(
+                'rounded-full bg-accent-500 animate-bounce',
+                size === 'xs' ? 'w-1 h-1' :
+                size === 'sm' ? 'w-1.5 h-1.5' :
+                size === 'md' ? 'w-2 h-2' :
+                size === 'lg' ? 'w-2.5 h-2.5' : 'w-3 h-3'
+              )}
+              style={{ animationDelay: '300ms' }}
+            />
+          </div>
+        );
+
+      case 'pulse':
+        return (
+          <div className={cn('relative', sizeClasses[size], className)}>
+            <div
+              className={cn(
+                'absolute inset-0 rounded-full bg-accent-500 animate-ping opacity-75',
+                sizeClasses[size]
+              )}
+              aria-hidden="true"
+            />
+            <div
+              className={cn(
+                'relative rounded-full bg-accent-500 animate-pulse',
+                sizeClasses[size]
+              )}
+              aria-hidden="true"
+            />
+          </div>
+        );
+
       default:
-        return 'border-accent-500/30 border-t-accent-500';
+        return (
+          <div
+            className={cn(
+              baseSpinnerClasses,
+              'border-gray-300 dark:border-gray-600 border-t-gray-900 dark:border-t-gray-300',
+              sizeClasses[size],
+              className
+            )}
+            aria-hidden="true"
+          />
+        );
     }
   };
 
-  const getMessageTextClass = () => {
-    switch (variant) {
-      case 'primary':
-        return 'text-white/80';
-      case 'secondary':
-        return 'text-white/60';
-      case 'white':
-        return 'text-white';
-      default:
-        return 'text-white/80';
-    }
-  };
-
-  const spinner = (
-    <div className={`loading-spinner ${getSizeClasses()} ${getVariantClasses()} ${className}`} />
-  );
-
-  const content = (
-    <div className="flex flex-col items-center justify-center gap-3">
-      {spinner}
-      {message && (
-        <p className={`text-sm font-medium ${getMessageTextClass()}`}>
-          {message}
-        </p>
+  return (
+    <div className="inline-flex items-center gap-2" role="status" aria-live="polite">
+      {renderSpinner()}
+      {label && (
+        <span className="sr-only">
+          {label}
+        </span>
       )}
     </div>
   );
-
-  if (fullScreen) {
-    return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="loading-container p-8 rounded-2xl">
-          {content}
-        </div>
-      </div>
-    );
-  }
-
-  return content;
 };
+
+// Specialized loading components for common use cases
+export const PageLoader: React.FC<{ message?: string }> = ({ message = 'Loading page...' }) => (
+  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/10 to-slate-900">
+    <div className="text-center space-y-4">
+      <LoadingSpinner size="xl" variant="gradient" />
+      <p className="text-white/70 text-lg font-medium">{message}</p>
+    </div>
+  </div>
+);
+
+export const ButtonLoader: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'sm' }) => (
+  <LoadingSpinner size={size} variant="white" />
+);
+
+export const InlineLoader: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
+  <div className="inline-flex items-center gap-2 text-white/70">
+    <LoadingSpinner size="sm" variant="accent" />
+    <span className="text-sm">{message}</span>
+  </div>
+);
 
 // Skeleton loader component for content placeholders
 interface SkeletonProps {

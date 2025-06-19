@@ -1,6 +1,6 @@
 // Chat service for API communication with backend
 import { apiService } from '@/services/api';
-import type { ChatRequest, ChatResponse } from '../types';
+import type { ChatRequest, ChatResponse, Message, ChatHistoryRequest } from '../types';
 
 export class ChatService {
   /**
@@ -47,6 +47,86 @@ export class ChatService {
       }
       
       throw new Error('Failed to send message. Please try again.');
+    }
+  }
+
+  /**
+   * Get chat history for the authenticated user from the last 7 days
+   */
+  static async getChatHistory(params?: ChatHistoryRequest): Promise<Message[]> {
+    try {
+      console.log('🔄 Chat Service: Loading chat history:', params);
+      
+      // Calculate 7 days ago for filtering
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      // Try to get history from backend first
+      try {
+        const response = await apiService.chat.getHistory({
+          ...params,
+          after: sevenDaysAgo, // Only get messages from last 7 days
+          limit: params?.limit || 100,
+        });
+        
+        if (response.success && response.data?.messages) {
+          console.log('✅ Chat Service: History loaded from backend:', response.data.messages.length, 'messages');
+          
+          // Transform backend messages to frontend format
+          const messages: Message[] = response.data.messages.map((msg: Record<string, unknown>) => ({
+            id: msg.id as string,
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content as string,
+            timestamp: new Date(msg.timestamp as string), // Ensure timestamp is Date object
+            userId: msg.userId as string,
+            synced: true, // Messages from backend are already synced
+          }));
+          
+          return messages;
+        }
+      } catch (backendError) {
+        console.warn('⚠️ Chat Service: Backend history unavailable, using local storage:', backendError);
+      }
+      
+      // Fallback: Return empty array if backend is unavailable
+      // The chat store will handle local persistence
+      console.log('📝 Chat Service: Returning empty history (backend unavailable)');
+      return [];
+      
+    } catch (error) {
+      console.error('❌ Chat Service: Failed to get chat history:', error);
+      
+      // Don't throw error for history loading - gracefully degrade
+      console.warn('⚠️ Chat Service: History loading failed, continuing without history');
+      return [];
+    }
+  }
+
+  /**
+   * Save message to backend for persistence
+   */
+  static async saveMessage(message: Message): Promise<boolean> {
+    try {
+      console.log('🔄 Chat Service: Saving message to backend:', message.id);
+      
+      const response = await apiService.chat.saveMessage({
+        id: message.id,
+        role: message.role,
+        content: message.content,
+        timestamp: message.timestamp,
+        userId: message.userId,
+      });
+      
+      if (response.success) {
+        console.log('✅ Chat Service: Message saved to backend:', message.id);
+        return true;
+      } else {
+        console.warn('⚠️ Chat Service: Failed to save message:', response);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Chat Service: Failed to save message:', error);
+      return false;
     }
   }
 

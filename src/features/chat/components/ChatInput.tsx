@@ -1,6 +1,10 @@
 // Ultra-Premium ChatInput with cinematic effects and immersive design
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { useChatStore } from '../store/chat.store';
+import { 
+  useSendMessage, 
+  useChatLoading, 
+  useChatError 
+} from '../store/chat.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { LoadingSpinner } from '@/components/ui';
 
@@ -12,7 +16,9 @@ export const ChatInput: React.FC = () => {
   const [input, setInput] = useState('');
   const [isComposing, setIsComposing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { sendMessage, isLoading, error } = useChatStore();
+  const sendMessage = useSendMessage();
+  const isLoading = useChatLoading();
+  const error = useChatError();
   const { isAuthenticated } = useAuthStore();
 
   // Auto-resize textarea

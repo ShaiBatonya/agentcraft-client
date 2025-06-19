@@ -1,60 +1,62 @@
-// Enhanced Router configuration with proper lazy loading and error handling
+// Enhanced Router Configuration with all pages and proper error handling
+import React, { Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
-import { MainLayout } from '../layout/MainLayout';
-import { AuthGuard } from '../components/auth/AuthGuard';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
-// Lazy load components with direct imports (more reliable)
-const HomePage = lazy(() => import('../pages/HomePage').then(module => ({ default: module.HomePage })));
-const LoginPage = lazy(() => import('../pages/LoginPage').then(module => ({ default: module.LoginPage })));
-const ChatPage = lazy(() => import('../features/chat/pages/ChatPage'));
-const AuthCallbackPage = lazy(() => import('../pages/AuthCallbackPage').then(module => ({ default: module.AuthCallbackPage })));
-const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then(module => ({ default: module.NotFoundPage })));
+import { AuthGuard } from '@/components/auth/AuthGuard';
+import { MainLayout } from '@/layout/MainLayout';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+
+// Lazy load all pages for better performance
+const HomePage = React.lazy(() => import('@/pages/HomePage').then(module => ({ default: module.HomePage })));
+const LoginPage = React.lazy(() => import('@/pages/LoginPage').then(module => ({ default: module.LoginPage })));
+const AuthCallbackPage = React.lazy(() => import('@/pages/AuthCallbackPage').then(module => ({ default: module.AuthCallbackPage })));
+const ChatPage = React.lazy(() => import('@/features/chat/pages/ChatPage'));
+const ProfilePage = React.lazy(() => import('@/pages/ProfilePage').then(module => ({ default: module.ProfilePage })));
+const SettingsPage = React.lazy(() => import('@/pages/SettingsPage').then(module => ({ default: module.SettingsPage })));
+const SupportPage = React.lazy(() => import('@/pages/SupportPage').then(module => ({ default: module.SupportPage })));
+const NotFoundPage = React.lazy(() => import('@/pages/NotFoundPage').then(module => ({ default: module.NotFoundPage })));
 
 // Enhanced loading component
-const RouteLoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-[50vh]">
-    <LoadingSpinner size="lg" variant="primary" message="Loading page..." />
+const PageLoadingSpinner = () => (
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="relative mb-4">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-accent-500 to-purple-600 flex items-center justify-center shadow-elevation-4 mx-auto">
+          <LoadingSpinner size="lg" variant="white" />
+        </div>
+        <div className="absolute -inset-4 bg-gradient-to-br from-accent-500/20 to-purple-600/20 rounded-3xl blur-xl opacity-50" />
+      </div>
+      <p className="text-white/70 text-sm">Loading...</p>
+    </div>
   </div>
 );
 
-// Error fallback component for route errors
-const RouteErrorFallback = ({ error }: { error?: Error }) => (
-  <div className="flex items-center justify-center min-h-[50vh] p-8">
-    <div className="text-center max-w-md">
-      <div className="error-container p-8 space-y-6">
-        <div className="mx-auto w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
-          <svg className="w-8 h-8 error-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+// Enhanced error fallback component
+const PageErrorFallback = ({ error, retry }: { error: Error; retry: () => void }) => (
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 flex items-center justify-center">
+    <div className="text-center max-w-md mx-auto p-8">
+      <div className="glass-card-subtle p-8">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center">
+          <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
         </div>
-        
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-2">
-            Page Load Error
-          </h2>
-          <p className="error-text text-sm mb-4">
-            {error?.message || 'Failed to load this page. This might be a temporary issue.'}
-          </p>
-        </div>
-
-        <div className="space-y-3">
+        <h2 className="text-xl font-bold text-white mb-3">Something went wrong</h2>
+        <p className="text-white/70 mb-6 text-sm">
+          {error.message || 'An unexpected error occurred while loading this page.'}
+        </p>
+        <div className="flex gap-3 justify-center">
           <button
-            onClick={() => window.location.reload()}
-            className="w-full btn-primary text-sm"
+            onClick={retry}
+            className="btn-primary text-sm px-4 py-2"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Reload Page
+            Try Again
           </button>
-          
           <button
-            onClick={() => window.history.back()}
-            className="w-full btn-secondary text-sm"
+            onClick={() => window.location.href = '/'}
+            className="btn-secondary text-sm px-4 py-2"
           >
-            ← Go Back
+            Go Home
           </button>
         </div>
       </div>
@@ -62,83 +64,99 @@ const RouteErrorFallback = ({ error }: { error?: Error }) => (
   </div>
 );
 
-// Wrapper component for MainLayout with error boundary
-const LayoutWrapper = ({ children }: { children: React.ReactNode }) => (
-  <MainLayout>{children}</MainLayout>
-);
-
-// Enhanced Suspense wrapper with error boundary
-const SuspenseWrapper = ({ 
+// Wrapper component for pages with layout and suspense
+const PageWrapper: React.FC<{ children: React.ReactNode; requireAuth?: boolean }> = ({ 
   children, 
-  fallback = <RouteLoadingSpinner /> 
-}: { 
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  requireAuth = false 
 }) => (
-  <Suspense fallback={fallback}>
-    {children}
-  </Suspense>
+  <MainLayout>
+    <Suspense fallback={<PageLoadingSpinner />}>
+      {requireAuth ? (
+        <AuthGuard>
+          {children}
+        </AuthGuard>
+      ) : (
+        children
+      )}
+    </Suspense>
+  </MainLayout>
 );
 
-// Router configuration with proper error handling
+// Router configuration
 export const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <LayoutWrapper>
-        <SuspenseWrapper>
-          <HomePage />
-        </SuspenseWrapper>
-      </LayoutWrapper>
+      <PageWrapper>
+        <HomePage />
+      </PageWrapper>
     ),
-    errorElement: <RouteErrorFallback />,
+    errorElement: <PageErrorFallback error={new Error('Failed to load home page')} retry={() => window.location.reload()} />,
   },
   {
     path: '/login',
     element: (
-      <SuspenseWrapper>
+      <PageWrapper>
         <LoginPage />
-      </SuspenseWrapper>
+      </PageWrapper>
     ),
-    errorElement: <RouteErrorFallback />,
+    errorElement: <PageErrorFallback error={new Error('Failed to load login page')} retry={() => window.location.reload()} />,
   },
   {
     path: '/auth/callback',
     element: (
-      <SuspenseWrapper>
+      <PageWrapper>
         <AuthCallbackPage />
-      </SuspenseWrapper>
+      </PageWrapper>
     ),
-    errorElement: <RouteErrorFallback />,
+    errorElement: <PageErrorFallback error={new Error('Failed to load auth callback')} retry={() => window.location.reload()} />,
   },
   {
     path: '/chat',
     element: (
-      <AuthGuard>
-        <LayoutWrapper>
-          <SuspenseWrapper>
-            <div className="min-h-[calc(100vh-8rem)]">
-              <ChatPage />
-            </div>
-          </SuspenseWrapper>
-        </LayoutWrapper>
-      </AuthGuard>
+      <PageWrapper>
+        <ChatPage />
+      </PageWrapper>
     ),
-    errorElement: (
-      <AuthGuard>
-        <LayoutWrapper>
-          <RouteErrorFallback />
-        </LayoutWrapper>
-      </AuthGuard>
-    ),
+    errorElement: <PageErrorFallback error={new Error('Failed to load chat page')} retry={() => window.location.reload()} />,
   },
+  {
+    path: '/profile',
+    element: (
+      <PageWrapper requireAuth>
+        <ProfilePage />
+      </PageWrapper>
+    ),
+    errorElement: <PageErrorFallback error={new Error('Failed to load profile page')} retry={() => window.location.reload()} />,
+  },
+  {
+    path: '/settings',
+    element: (
+      <PageWrapper>
+        <SettingsPage />
+      </PageWrapper>
+    ),
+    errorElement: <PageErrorFallback error={new Error('Failed to load settings page')} retry={() => window.location.reload()} />,
+  },
+  {
+    path: '/support',
+    element: (
+      <PageWrapper>
+        <SupportPage />
+      </PageWrapper>
+    ),
+    errorElement: <PageErrorFallback error={new Error('Failed to load support page')} retry={() => window.location.reload()} />,
+  },
+  // Catch-all route for 404 errors
   {
     path: '*',
     element: (
-      <SuspenseWrapper>
+      <PageWrapper>
         <NotFoundPage />
-      </SuspenseWrapper>
+      </PageWrapper>
     ),
-    errorElement: <RouteErrorFallback />,
+    errorElement: <PageErrorFallback error={new Error('Page not found')} retry={() => window.location.reload()} />,
   },
-]); 
+]);
+
+export default router; 
