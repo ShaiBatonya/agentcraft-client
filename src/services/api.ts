@@ -16,7 +16,7 @@ import {
 
 // API Configuration
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   timeout: 10000,
   retries: 3,
   retryDelay: 1000,
@@ -212,21 +212,6 @@ export const apiService = {
 
   // Authentication
   auth: {
-    async login(email: string, password: string): Promise<ApiResponse<{ user: User }>> {
-      const response = await apiClient.post<ApiResponse<{ user: User }>>('/auth/login', {
-        email,
-        password,
-      });
-      
-      // Validate response
-      const parsed = apiResponseSchema(userSchema).safeParse(response);
-      if (!parsed.success) {
-        throw new ApiError('VALIDATION_ERROR', 'Invalid response format');
-      }
-      
-      return response;
-    },
-
     async logout(): Promise<ApiResponse<null>> {
       return apiClient.post('/auth/logout');
     },
@@ -235,7 +220,7 @@ export const apiService = {
       const response = await apiClient.get<ApiResponse<User>>('/auth/me');
       
       // Validate response
-      const parsed = apiResponseSchema(userSchema).safeParse(response);
+      const parsed = apiResponseSchema(userSchema).safeParse(response.data);
       if (!parsed.success) {
         throw new ApiError('VALIDATION_ERROR', 'Invalid user data');
       }
@@ -243,8 +228,8 @@ export const apiService = {
       return response;
     },
 
-    async refreshToken(): Promise<ApiResponse<null>> {
-      return apiClient.post('/auth/refresh');
+    async health(): Promise<ApiResponse<{ authenticated: boolean }>> {
+      return apiClient.get('/auth/health');
     },
   },
 

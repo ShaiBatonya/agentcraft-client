@@ -12,12 +12,13 @@ interface AuthState {
 }
 
 interface AuthActions {
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  // Google OAuth will handle login via redirect, so we mainly need these actions:
   getCurrentUser: () => Promise<void>;
-  refreshToken: () => Promise<void>;
+  logout: () => Promise<void>;
+  checkAuthStatus: () => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
+  setUser: (user: User | null) => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -33,17 +34,17 @@ export const useAuthStore = create<AuthStore>()(
         error: null,
 
         // Actions
-        login: async (email: string, password: string) => {
+        getCurrentUser: async () => {
           try {
             set(state => {
               state.isLoading = true;
               state.error = null;
             });
 
-            const response = await apiService.auth.login(email, password);
+            const response = await apiService.auth.me();
             
             set(state => {
-              state.user = response.data.user;
+              state.user = response.data;
               state.isAuthenticated = true;
               state.isLoading = false;
               state.error = null;
@@ -51,11 +52,10 @@ export const useAuthStore = create<AuthStore>()(
           } catch (error) {
             set(state => {
               state.isLoading = false;
-              state.error = error instanceof Error ? error.message : 'Login failed';
+              state.error = error instanceof Error ? error.message : 'Failed to get user';
               state.isAuthenticated = false;
               state.user = null;
             });
-            throw error;
           }
         },
 
@@ -85,45 +85,31 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        getCurrentUser: async () => {
+        checkAuthStatus: async () => {
           try {
             set(state => {
               state.isLoading = true;
               state.error = null;
             });
 
-            const response = await apiService.auth.me();
-            
+            // This will check if the user has a valid auth cookie
+            await get().getCurrentUser();
+          } catch {
+            // If auth check fails, user is not authenticated
             set(state => {
-              state.user = response.data;
-              state.isAuthenticated = true;
-              state.isLoading = false;
-              state.error = null;
-            });
-          } catch (error) {
-            set(state => {
-              state.isLoading = false;
-              state.error = error instanceof Error ? error.message : 'Failed to get user';
-              state.isAuthenticated = false;
               state.user = null;
+              state.isAuthenticated = false;
+              state.isLoading = false;
+              state.error = null; // Don't show error for failed auth check
             });
           }
         },
 
-        refreshToken: async () => {
-          try {
-            await apiService.auth.refreshToken();
-            // If refresh succeeds, get updated user data
-            await get().getCurrentUser();
-          } catch (error) {
-            // If refresh fails, user needs to login again
-            set(state => {
-              state.user = null;
-              state.isAuthenticated = false;
-              state.error = 'Session expired. Please login again.';
-            });
-            throw error;
-          }
+        setUser: (user: User | null) => {
+          set(state => {
+            state.user = user;
+            state.isAuthenticated = !!user;
+          });
         },
 
         clearError: () => {
@@ -161,10 +147,10 @@ export const useAuthError = () => useAuthStore(state => state.error);
 
 // Actions
 export const useAuthActions = () => useAuthStore(state => ({
-  login: state.login,
-  logout: state.logout,
   getCurrentUser: state.getCurrentUser,
-  refreshToken: state.refreshToken,
+  logout: state.logout,
+  checkAuthStatus: state.checkAuthStatus,
   clearError: state.clearError,
   setLoading: state.setLoading,
+  setUser: state.setUser,
 })); 

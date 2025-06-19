@@ -9,6 +9,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    port: 5173,
+    host: true,
+    hmr: {
+      overlay: false, // Disable error overlay for better dev experience
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

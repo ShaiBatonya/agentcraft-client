@@ -41,7 +41,7 @@ export const ChatPage: React.FC = () => {
                 AI Assistant
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <span className="w-2 h-2 bg-green-500 rounded-full block" />
                 Online & Ready to Help
               </p>
             </div>

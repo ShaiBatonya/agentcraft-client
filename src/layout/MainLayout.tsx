@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuthStore } from '@/stores/auth.store';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -7,6 +8,12 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const { user, isAuthenticated, isLoading, checkAuthStatus, logout } = useAuthStore();
+
+  // Check auth status on mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
 
   const navigation = [
     { name: 'Home', href: '/', current: location.pathname === '/' },
@@ -54,18 +61,51 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               ))}
             </div>
 
-            {/* CTA Buttons */}
+            {/* Auth & CTA Buttons */}
             <div className="flex items-center gap-4">
-              <button className="hidden sm:inline-flex text-sm font-medium text-white/80 hover:text-white transition-colors duration-300">
-                Sign In
-              </button>
+              {isAuthenticated ? (
+                <>
+                  {/* User Info */}
+                  <div className="hidden sm:flex items-center gap-3">
+                    <img
+                      src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || '')}&background=6366f1&color=fff`}
+                      alt={user?.name}
+                      className="h-8 w-8 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-white">{user?.name}</span>
+                      <span className="text-xs text-white/60">{user?.role}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Logout Button */}
+                  <button
+                    onClick={() => logout()}
+                    disabled={isLoading}
+                    className="hidden sm:inline-flex text-sm font-medium text-white/80 hover:text-white transition-colors duration-300 disabled:opacity-50"
+                  >
+                    {isLoading ? 'Loading...' : 'Sign Out'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Sign In Button */}
+                  <Link
+                    to="/login"
+                    className="hidden sm:inline-flex text-sm font-medium text-white/80 hover:text-white transition-colors duration-300"
+                  >
+                    Sign In
+                  </Link>
+                </>
+              )}
               
+              {/* Chat Button */}
               <Link to="/chat">
                 <button className="btn-primary text-sm px-6 py-3 min-h-[44px]">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  Try Now
+                  {isAuthenticated ? 'Chat' : 'Try Now'}
                 </button>
               </Link>
 

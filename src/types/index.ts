@@ -1,11 +1,14 @@
 // Global application types
 export interface User {
   id: string;
+  googleId?: string;
   email: string;
   name: string;
   avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  role: 'user' | 'admin';
+  isAdmin: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Message {
