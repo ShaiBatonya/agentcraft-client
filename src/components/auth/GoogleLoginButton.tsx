@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/shared/ui/Button';
+import { authService } from '@/services/auth.service';
 
 interface GoogleLoginButtonProps {
   variant?: 'primary' | 'secondary';
@@ -15,8 +16,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   className = '',
 }) => {
   const handleGoogleLogin = () => {
-    // Redirect to your backend's Google OAuth endpoint
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/google`;
+    authService.initiateGoogleLogin();
   };
 
   const GoogleIcon = () => (

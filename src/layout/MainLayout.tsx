@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -8,12 +8,7 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
-  const { user, isAuthenticated, isLoading, checkAuthStatus, logout } = useAuthStore();
-
-  // Check auth status on mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+  const { user, isAuthenticated, isLoading, logout } = useAuthStore();
 
   const navigation = [
     { name: 'Home', href: '/', current: location.pathname === '/' },

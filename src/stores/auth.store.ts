@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import type { User } from '@/types';
-import { apiService } from '@/services/api';
+import { authService, AuthenticationError } from '@/services/auth.service';
 
 interface AuthState {
   user: User | null;
@@ -26,7 +26,7 @@ type AuthStore = AuthState & AuthActions;
 export const useAuthStore = create<AuthStore>()(
   devtools(
     persist(
-      immer((set, get) => ({
+      immer((set) => ({
         // Initial state
         user: null,
         isAuthenticated: false,
@@ -41,10 +41,10 @@ export const useAuthStore = create<AuthStore>()(
               state.error = null;
             });
 
-            const response = await apiService.auth.me();
+            const user = await authService.getCurrentUser();
             
             set(state => {
-              state.user = response.data;
+              state.user = user;
               state.isAuthenticated = true;
               state.isLoading = false;
               state.error = null;
@@ -52,7 +52,7 @@ export const useAuthStore = create<AuthStore>()(
           } catch (error) {
             set(state => {
               state.isLoading = false;
-              state.error = error instanceof Error ? error.message : 'Failed to get user';
+              state.error = error instanceof AuthenticationError ? error.message : 'Failed to get user';
               state.isAuthenticated = false;
               state.user = null;
             });
@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthStore>()(
               state.error = null;
             });
 
-            await apiService.auth.logout();
+            await authService.logout();
             
             set(state => {
               state.user = null;
@@ -86,15 +86,44 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         checkAuthStatus: async () => {
+          console.log('🔄 AuthStore: Starting checkAuthStatus');
+          
+          // Create a timeout promise
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+              reject(new Error('Auth check timeout after 8 seconds'));
+            }, 8000);
+          });
+          
           try {
             set(state => {
               state.isLoading = true;
               state.error = null;
             });
 
-            // This will check if the user has a valid auth cookie
-            await get().getCurrentUser();
-          } catch {
+            console.log('🔄 AuthStore: Calling authService.checkAuthStatus');
+            
+            // Race between auth check and timeout
+            const result = await Promise.race([
+              authService.checkAuthStatus(),
+              timeoutPromise
+            ]) as { isAuthenticated: boolean; user?: User };
+            
+            console.log('✅ AuthStore: Auth check result:', { 
+              isAuthenticated: result.isAuthenticated, 
+              hasUser: !!result.user 
+            });
+            
+            set(state => {
+              state.user = result.user || null;
+              state.isAuthenticated = result.isAuthenticated;
+              state.isLoading = false;
+              state.error = null;
+            });
+            
+            console.log('✅ AuthStore: State updated successfully');
+          } catch (error) {
+            console.error('❌ AuthStore: Auth check failed:', error);
             // If auth check fails, user is not authenticated
             set(state => {
               state.user = null;
@@ -102,6 +131,9 @@ export const useAuthStore = create<AuthStore>()(
               state.isLoading = false;
               state.error = null; // Don't show error for failed auth check
             });
+            
+            // Re-throw error so App.tsx can handle it
+            throw error;
           }
         },
 

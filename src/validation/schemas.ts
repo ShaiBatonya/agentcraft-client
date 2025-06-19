@@ -72,12 +72,21 @@ export const userNameSchema = z
   .trim();
 
 export const userSchema = z.object({
-  id: idSchema,
+  id: z.string().min(1, 'User ID is required'), // Accept any string ID (MongoDB ObjectId)
+  googleId: z.string().optional(),
   email: emailSchema,
   name: userNameSchema,
-  avatar: z.string().url('Invalid avatar URL').optional(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  avatar: z.string().url('Invalid avatar URL').optional().or(z.literal('')).optional(),
+  role: z.enum(['user', 'admin']).default('user'),
+  isAdmin: z.boolean().default(false),
+  createdAt: z.union([z.string().datetime(), z.date()]).optional().transform(val => {
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
+  updatedAt: z.union([z.string().datetime(), z.date()]).optional().transform(val => {
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
 });
 
 // Authentication schemas

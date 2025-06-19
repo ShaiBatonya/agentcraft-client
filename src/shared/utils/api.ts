@@ -1,41 +1,11 @@
-// Axios instance with base configuration for API calls
-import axios from 'axios';
+// Shared API utility - now uses centralized configuration
+import { api as centralizedApi, apiService } from '@/services/api';
 
-// Create axios instance with base configuration
-export const api = axios.create({
-  baseURL: '/api',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// Export the centralized API instance for backward compatibility
+export const api = centralizedApi;
 
-// Request interceptor for adding auth tokens, logging, etc.
-api.interceptors.request.use(
-  (config) => {
-    // Add auth token if available
-    // const token = localStorage.getItem('authToken');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Export the enhanced API service
+export { apiService };
 
-// Response interceptor for handling global errors
-api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    // Handle global errors here
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      // logout or redirect to login
-    }
-    return Promise.reject(error);
-  }
-); 
+// Legacy support - export the axios instance as default export
+export default centralizedApi; 

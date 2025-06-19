@@ -8,6 +8,7 @@ import { AuthGuard } from '../components/auth/AuthGuard';
 const HomePage = lazy(() => import('../pages/HomePage').then(module => ({ default: module.HomePage })));
 const LoginPage = lazy(() => import('../pages/LoginPage').then(module => ({ default: module.LoginPage })));
 const ChatPage = lazy(() => import('../features/chat').then(module => ({ default: module.ChatPage })));
+const AuthCallbackPage = lazy(() => import('../pages/AuthCallbackPage').then(module => ({ default: module.AuthCallbackPage })));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -38,6 +39,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<LoadingSpinner />}>
         <LoginPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/auth/callback',
+    element: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <AuthCallbackPage />
       </Suspense>
     ),
   },
