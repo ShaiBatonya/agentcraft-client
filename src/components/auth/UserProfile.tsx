@@ -9,17 +9,19 @@ interface UserProfileProps {
 export const UserProfile: React.FC<UserProfileProps> = ({ className = '' }) => {
   const user = useUser();
   const { isLoading } = useAuthStore();
-  const { logout } = useAuthActions();
+  const { logoutAndRedirect } = useAuthActions();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    console.log('🚪 UserProfile: Starting logout process');
     try {
       setIsLoggingOut(true);
-      await logout();
-      // Redirect to home page after logout
-      window.location.href = '/';
+      // Use the enhanced logout with redirect
+      await logoutAndRedirect();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ UserProfile: Logout error:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/';
     } finally {
       setIsLoggingOut(false);
     }

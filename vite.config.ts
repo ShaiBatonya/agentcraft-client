@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    port: 5174,
+    port: 5173,
     host: true,
     hmr: {
       overlay: false, // Disable error overlay for better dev experience

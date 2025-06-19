@@ -19,6 +19,8 @@ interface AuthActions {
   clearError: () => void;
   setLoading: (loading: boolean) => void;
   setUser: (user: User | null) => void;
+  // Enhanced logout with redirect
+  logoutAndRedirect: () => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -75,13 +77,61 @@ export const useAuthStore = create<AuthStore>()(
               state.error = null;
             });
           } catch (error) {
+            console.warn('Logout API call failed, but clearing local state anyway:', error);
             // Even if logout fails on server, clear local state
             set(state => {
               state.user = null;
               state.isAuthenticated = false;
               state.isLoading = false;
-              state.error = error instanceof Error ? error.message : 'Logout failed';
+              state.error = null; // Don't show error for logout
             });
+          }
+        },
+
+        logoutAndRedirect: async () => {
+          console.log('🚪 AuthStore: Starting logout with redirect');
+          try {
+            // Clear state immediately for better UX
+            set(state => {
+              state.isLoading = true;
+              state.error = null;
+            });
+
+            // Call server logout (don't wait if it fails)
+            try {
+              await authService.logout();
+              console.log('✅ AuthStore: Server logout successful');
+            } catch (error) {
+              console.warn('⚠️ AuthStore: Server logout failed, continuing with local cleanup:', error);
+            }
+            
+            // Clear all local state
+            set(state => {
+              state.user = null;
+              state.isAuthenticated = false;
+              state.isLoading = false;
+              state.error = null;
+            });
+
+            // Clear any OAuth parameters from URL
+            authService.clearOAuthParams();
+
+            // Redirect to homepage
+            console.log('🏠 AuthStore: Redirecting to homepage');
+            window.location.href = '/';
+            
+          } catch (error) {
+            console.error('❌ AuthStore: Logout error:', error);
+            // Ensure state is cleared even on error
+            set(state => {
+              state.user = null;
+              state.isAuthenticated = false;
+              state.isLoading = false;
+              state.error = null;
+            });
+            
+            // Force redirect anyway
+            window.location.href = '/';
           }
         },
 
@@ -132,8 +182,10 @@ export const useAuthStore = create<AuthStore>()(
               state.error = null; // Don't show error for failed auth check
             });
             
-            // Re-throw error so App.tsx can handle it
-            throw error;
+            // Only throw if it's a real error, not auth failure
+            if (error instanceof Error && !error.message.includes('not authenticated')) {
+              throw error;
+            }
           }
         },
 
@@ -163,6 +215,15 @@ export const useAuthStore = create<AuthStore>()(
           user: state.user,
           isAuthenticated: state.isAuthenticated,
         }),
+        // Add storage event listener to sync logout across tabs
+        onRehydrateStorage: () => (state) => {
+          if (state) {
+            console.log('🔄 AuthStore: Rehydrated from storage', {
+              isAuthenticated: state.isAuthenticated,
+              hasUser: !!state.user
+            });
+          }
+        },
       }
     ),
     {
@@ -181,6 +242,7 @@ export const useAuthError = () => useAuthStore(state => state.error);
 export const useAuthActions = () => useAuthStore(state => ({
   getCurrentUser: state.getCurrentUser,
   logout: state.logout,
+  logoutAndRedirect: state.logoutAndRedirect,
   checkAuthStatus: state.checkAuthStatus,
   clearError: state.clearError,
   setLoading: state.setLoading,
