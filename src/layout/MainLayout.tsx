@@ -332,7 +332,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {/* Bottom Bar */}
           <div className="mt-16 flex flex-col items-center justify-between gap-6 border-t border-white/10 pt-8 sm:flex-row">
             <div className="flex items-center gap-6 text-sm text-white/60">
-              <span>© 2024 AgentCraft. All rights reserved.</span>
+              <span>Developed by Shai Batonya © 2025 AgentCraft. All rights reserved.</span>
               <div className="flex items-center gap-4">
                 <a href="#" className="hover:text-white transition-colors duration-300">Terms</a>
                 <a href="#" className="hover:text-white transition-colors duration-300">Privacy</a>

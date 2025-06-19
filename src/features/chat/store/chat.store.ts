@@ -1,7 +1,7 @@
-// Enhanced Zustand store for chat state management with history persistence
+// Enhanced Zustand store for chat state management with advanced features
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { Message, ChatState } from '../types';
+import type { Message, ChatState, SearchResult, SearchFilters } from '../types';
 import { ChatService } from '../services/chat.service';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -15,6 +15,26 @@ interface ChatActions {
   setError: (error: string | null) => void;
   clearOldMessages: () => void;
   initializeChat: () => Promise<void>;
+  
+  // Advanced features
+  deleteMessage: (messageId: string) => Promise<void>;
+  restoreMessage: (messageId: string) => void;
+  editMessage: (messageId: string, newContent: string) => void;
+  searchMessages: (query: string, filters?: SearchFilters) => SearchResult[];
+  setSearchQuery: (query: string) => void;
+  setSearchResults: (results: SearchResult[]) => void;
+  clearSearch: () => void;
+  setSelectedMessage: (messageId: string | null) => void;
+  exportChat: (format: 'json' | 'txt' | 'md') => string;
+  getMessageStats: () => {
+    total: number;
+    userMessages: number;
+    assistantMessages: number;
+    errorMessages: number;
+    unsyncedMessages: number;
+    editedMessages: number;
+    deletedMessages: number;
+  };
 }
 
 interface ChatStoreState extends ChatState {
@@ -30,6 +50,10 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         messages: [],
         isLoading: false,
         error: null,
+        searchQuery: '',
+        filteredMessages: [],
+        selectedMessageId: null,
+        isSearching: false,
         lastSyncTimestamp: 0,
         isInitialized: false,
 
@@ -212,12 +236,252 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
           });
         },
 
+        // Advanced Features
+
+        deleteMessage: async (messageId: string) => {
+          console.log('🗑️ ChatStore: Deleting message:', messageId);
+          
+          set(state => ({
+            ...state,
+            messages: state.messages.map(msg => 
+              msg.id === messageId 
+                ? { ...msg, deleted: true, originalContent: msg.originalContent || msg.content, content: '[Message deleted]' }
+                : msg
+            ),
+          }));
+
+          // TODO: Send delete request to backend
+          try {
+            // await ChatService.deleteMessage(messageId);
+            console.log('✅ ChatStore: Message marked as deleted');
+          } catch (error) {
+            console.error('❌ ChatStore: Failed to delete message on backend:', error);
+            // Rollback the deletion
+            set(state => ({
+              ...state,
+              messages: state.messages.map(msg => 
+                msg.id === messageId && msg.deleted
+                  ? { ...msg, deleted: false, content: msg.originalContent || msg.content }
+                  : msg
+              ),
+            }));
+          }
+        },
+
+        restoreMessage: (messageId: string) => {
+          console.log('♻️ ChatStore: Restoring message:', messageId);
+          
+          set(state => ({
+            ...state,
+            messages: state.messages.map(msg => 
+              msg.id === messageId 
+                ? { ...msg, deleted: false, content: msg.originalContent || msg.content }
+                : msg
+            ),
+          }));
+        },
+
+        editMessage: (messageId: string, newContent: string) => {
+          console.log('✏️ ChatStore: Editing message:', messageId);
+          
+          set(state => ({
+            ...state,
+            messages: state.messages.map(msg => 
+              msg.id === messageId 
+                ? { 
+                    ...msg, 
+                    content: newContent,
+                    edited: true,
+                    originalContent: msg.originalContent || msg.content
+                  }
+                : msg
+            ),
+          }));
+        },
+
+        searchMessages: (query: string, filters: SearchFilters = {}) => {
+          const state = get();
+          
+          if (!query.trim() && !Object.keys(filters).some(key => {
+            const value = filters[key as keyof SearchFilters];
+            return value !== undefined && value !== 'all';
+          })) {
+            return [];
+          }
+
+          const normalizedQuery = query.toLowerCase().trim();
+          let filteredMessages = state.messages.filter(msg => !msg.deleted);
+
+          // Apply filters
+          if (filters.role && filters.role !== 'all') {
+            filteredMessages = filteredMessages.filter(msg => msg.role === filters.role);
+          }
+
+          if (filters.dateFrom) {
+            filteredMessages = filteredMessages.filter(msg => new Date(msg.timestamp) >= filters.dateFrom!);
+          }
+
+          if (filters.dateTo) {
+            filteredMessages = filteredMessages.filter(msg => new Date(msg.timestamp) <= filters.dateTo!);
+          }
+
+          if (filters.hasError !== undefined) {
+            filteredMessages = filteredMessages.filter(msg => Boolean(msg.error) === filters.hasError);
+          }
+
+          if (filters.onlyUnsynced) {
+            filteredMessages = filteredMessages.filter(msg => !msg.synced);
+          }
+
+          // Perform text search
+          const results: SearchResult[] = [];
+
+          for (const message of filteredMessages) {
+            const content = message.content.toLowerCase();
+            let score = 0;
+
+            if (normalizedQuery && content.includes(normalizedQuery)) {
+              score = 10;
+              
+              // Create simple highlights
+              const highlights = [];
+              let index = content.indexOf(normalizedQuery);
+              while (index !== -1) {
+                highlights.push({
+                  start: index,
+                  end: index + normalizedQuery.length,
+                  text: message.content.substring(index, index + normalizedQuery.length)
+                });
+                index = content.indexOf(normalizedQuery, index + 1);
+              }
+
+              results.push({
+                message,
+                highlights,
+                relevanceScore: score
+              });
+            } else if (!normalizedQuery && Object.keys(filters).some(key => {
+              const value = filters[key as keyof SearchFilters];
+              return value !== undefined && value !== 'all';
+            })) {
+              // If only filters are applied, include all filtered messages
+              results.push({
+                message,
+                highlights: [],
+                relevanceScore: 1
+              });
+            }
+          }
+
+          // Sort by relevance and date
+          return results.sort((a, b) => {
+            const scoreDiff = b.relevanceScore - a.relevanceScore;
+            if (scoreDiff !== 0) return scoreDiff;
+            return new Date(b.message.timestamp).getTime() - new Date(a.message.timestamp).getTime();
+          });
+        },
+
+        setSearchQuery: (query: string) => {
+          set(state => ({
+            ...state,
+            searchQuery: query,
+          }));
+        },
+
+        setSearchResults: (results: SearchResult[]) => {
+          set(state => ({
+            ...state,
+            filteredMessages: results.map(r => r.message),
+          }));
+        },
+
+        clearSearch: () => {
+          set(state => ({
+            ...state,
+            searchQuery: '',
+            filteredMessages: [],
+            selectedMessageId: null,
+          }));
+        },
+
+        setSelectedMessage: (messageId: string | null) => {
+          set(state => ({
+            ...state,
+            selectedMessageId: messageId,
+          }));
+        },
+
+        exportChat: (format: 'json' | 'txt' | 'md' = 'json') => {
+          const state = get();
+          const activeMessages = state.messages.filter(msg => !msg.deleted);
+
+          switch (format) {
+            case 'json':
+              return JSON.stringify(activeMessages, null, 2);
+            
+            case 'txt': {
+              const lines = [`Chat Export - ${new Date().toLocaleString()}`, '='.repeat(50), ''];
+              for (const message of activeMessages) {
+                const timestamp = new Date(message.timestamp).toLocaleString();
+                const speaker = message.role === 'user' ? 'You' : 'Assistant';
+                lines.push(`[${timestamp}] ${speaker}:`);
+                lines.push(message.content);
+                lines.push('');
+              }
+              return lines.join('\n');
+            }
+            
+            case 'md': {
+              const mdLines = [
+                `# Chat Export`,
+                `*Generated on ${new Date().toLocaleString()}*`,
+                '',
+                '---',
+                ''
+              ];
+              for (const message of activeMessages) {
+                const timestamp = new Date(message.timestamp).toLocaleString();
+                const speaker = message.role === 'user' ? '👤 **You**' : '🤖 **Assistant**';
+                mdLines.push(`## ${speaker}`);
+                mdLines.push(`*${timestamp}*`);
+                mdLines.push('');
+                mdLines.push(message.content);
+                mdLines.push('');
+                mdLines.push('---');
+                mdLines.push('');
+              }
+              return mdLines.join('\n');
+            }
+            
+            default:
+              throw new Error(`Unsupported export format: ${format}`);
+          }
+        },
+
+        getMessageStats: () => {
+          const state = get();
+          const activeMessages = state.messages.filter(msg => !msg.deleted);
+          
+          return {
+            total: activeMessages.length,
+            userMessages: activeMessages.filter(msg => msg.role === 'user').length,
+            assistantMessages: activeMessages.filter(msg => msg.role === 'assistant').length,
+            errorMessages: activeMessages.filter(msg => msg.error).length,
+            unsyncedMessages: activeMessages.filter(msg => !msg.synced).length,
+            editedMessages: activeMessages.filter(msg => msg.edited).length,
+            deletedMessages: state.messages.filter(msg => msg.deleted).length,
+          };
+        },
+
         clearMessages: () => {
           console.log('🧹 ChatStore: Clearing all messages');
           set(state => ({
             ...state,
             messages: [],
             error: null,
+            filteredMessages: [],
+            searchQuery: '',
+            selectedMessageId: null,
           }));
         },
 
@@ -229,6 +493,9 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
             error: null,
             isLoading: false,
             lastSyncTimestamp: 0,
+            searchQuery: '',
+            filteredMessages: [],
+            selectedMessageId: null,
           }));
         },
 
@@ -261,7 +528,7 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
           lastSyncTimestamp: state.lastSyncTimestamp,
         }),
         // Storage version for future migrations
-        version: 1,
+        version: 2, // Incremented for new features
         onRehydrateStorage: () => (state) => {
           if (state) {
             console.log('🔄 ChatStore: Rehydrated from storage', {
@@ -290,11 +557,14 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
   )
 );
 
-// Stable selectors for better performance
+// Enhanced selectors for better performance
 export const useMessages = () => useChatStore(state => state.messages);
 export const useChatLoading = () => useChatStore(state => state.isLoading);
 export const useChatError = () => useChatStore(state => state.error);
 export const useChatInitialized = () => useChatStore(state => state.isInitialized);
+export const useSearchQuery = () => useChatStore(state => state.searchQuery);
+export const useFilteredMessages = () => useChatStore(state => state.filteredMessages);
+export const useSelectedMessage = () => useChatStore(state => state.selectedMessageId);
 
 // Individual action selectors for stable references
 export const useSendMessage = () => useChatStore(state => state.sendMessage);
@@ -304,4 +574,16 @@ export const useClearChat = () => useChatStore(state => state.clearChat);
 export const useClearError = () => useChatStore(state => state.clearError);
 export const useSetMessages = () => useChatStore(state => state.setMessages);
 export const useSetError = () => useChatStore(state => state.setError);
-export const useInitializeChat = () => useChatStore(state => state.initializeChat); 
+export const useInitializeChat = () => useChatStore(state => state.initializeChat);
+
+// Advanced feature selectors
+export const useDeleteMessage = () => useChatStore(state => state.deleteMessage);
+export const useRestoreMessage = () => useChatStore(state => state.restoreMessage);
+export const useEditMessage = () => useChatStore(state => state.editMessage);
+export const useSearchMessages = () => useChatStore(state => state.searchMessages);
+export const useSetSearchQuery = () => useChatStore(state => state.setSearchQuery);
+export const useSetSearchResults = () => useChatStore(state => state.setSearchResults);
+export const useClearSearch = () => useChatStore(state => state.clearSearch);
+export const useSetSelectedMessage = () => useChatStore(state => state.setSelectedMessage);
+export const useExportChat = () => useChatStore(state => state.exportChat);
+export const useMessageStats = () => useChatStore(state => state.getMessageStats); 
