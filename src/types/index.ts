@@ -173,4 +173,18 @@ export interface Environment {
   VITE_API_URL: string;
   VITE_APP_NAME: string;
   VITE_APP_VERSION: string;
+}
+
+export interface ChatConfig {
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  timeout?: number;
+  maxRetries?: number;
+}
+
+export interface ChatAnalyticsRequest {
+  period?: 'day' | 'week' | 'month' | 'year';
+  startDate?: string;
+  endDate?: string;
 } 

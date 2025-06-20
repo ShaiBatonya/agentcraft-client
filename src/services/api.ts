@@ -1,14 +1,12 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import type {
   ApiResponse,
-  ChatSession,
   User,
-  PaginatedResponse,
+  ChatConfig,
+  ChatAnalyticsRequest,
 } from '@/types';
 import {
-  chatSessionSchema,
   userSchema,
-  paginatedResponseSchema,
 } from '@/validation/schemas';
 
 // API Configuration
@@ -74,7 +72,7 @@ const offlineData: {
 // Request interceptor for debugging
 api.interceptors.request.use(
   (config) => {
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    // Only log errors and critical info
     return config;
   },
   (error) => {
@@ -86,21 +84,17 @@ api.interceptors.request.use(
 // Response interceptor for error handling and offline mode
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    // Only log errors and critical info
     return response;
   },
   async (error: AxiosError) => {
-    console.error(`❌ API Error: ${error.response?.status || 'NETWORK'} ${error.config?.url}`);
-    
-    // Check if server is unreachable
     if (!error.response && (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK')) {
-      console.log('🔌 Server unreachable, enabling offline mode...');
+      console.warn('🔌 Server unreachable, enabling offline mode...');
       isOfflineMode = true;
-      
-      // Handle offline requests
       return handleOfflineRequest(error.config);
     }
     
+    console.error(`❌ API Error:`, error.message);
     return Promise.reject(error);
   }
 );
@@ -374,81 +368,24 @@ export const apiService = {
 
   // Chat functionality
   chat: {
-    async sendMessage(message: string): Promise<ApiResponse<{ reply: string }>> {
-      const response = await apiClient.post<ApiResponse<{ reply: string }>>('/chat', {
-        prompt: message // Backend expects "prompt" field
-      });
-      
-      return response;
-    },
-
-    async getHistory(params?: {
-      userId?: string;
-      limit?: number;
-      before?: Date;
-      after?: Date;
-    }): Promise<ApiResponse<{ messages: Record<string, unknown>[]; total: number; hasMore: boolean }>> {
-      const searchParams = new URLSearchParams();
-      if (params?.limit) searchParams.set('limit', params.limit.toString());
-      if (params?.before) searchParams.set('before', params.before.toISOString());
-      if (params?.after) searchParams.set('after', params.after.toISOString());
-      if (params?.userId) searchParams.set('userId', params.userId);
-
-      const response = await apiClient.get<ApiResponse<{ 
-        messages: Record<string, unknown>[]; 
-        total: number; 
-        hasMore: boolean 
-      }>>(
-        `/chat/history?${searchParams}`
-      );
-      
-      return response;
-    },
-
-    async saveMessage(message: {
-      id: string;
-      role: 'user' | 'assistant';
-      content: string;
-      timestamp: Date;
-      userId?: string;
-    }): Promise<ApiResponse<{ id: string; saved: boolean }>> {
-      const response = await apiClient.post<ApiResponse<{ id: string; saved: boolean }>>('/chat/message', {
-        id: message.id,
-        role: message.role,
-        content: message.content,
-        timestamp: message.timestamp.toISOString(),
-        userId: message.userId,
-      });
-      
-      return response;
-    },
-
-    async getSessions(params?: {
-      page?: number;
-      limit?: number;
-      search?: string;
-    }): Promise<PaginatedResponse<ChatSession>> {
-      const searchParams = new URLSearchParams();
-      if (params?.page) searchParams.set('page', params.page.toString());
-      if (params?.limit) searchParams.set('limit', params.limit.toString());
-      if (params?.search) searchParams.set('search', params.search);
-
-      const response = await apiClient.get<PaginatedResponse<ChatSession>>(
-        `/chat/sessions?${searchParams}`
-      );
-      
-      // Validate response
-      const parsed = paginatedResponseSchema(chatSessionSchema).safeParse(response);
-      if (!parsed.success) {
-        throw new ApiError('VALIDATION_ERROR', 'Invalid sessions data');
-      }
-      
-      return response;
-    },
-
-    async healthCheck(): Promise<ApiResponse<{ status: string; model?: string }>> {
-      return apiClient.get('/chat/health');
-    },
+    // Thread-related endpoints
+    createThread: (title?: string) => api.post('/chat/thread', { title }),
+    getThreads: () => api.get('/chat/threads'),
+    deleteThread: (threadId: string) => api.delete(`/chat/thread/${threadId}`),
+    
+    // Message-related endpoints
+    getMessages: (threadId: string) => api.get(`/chat/thread/${threadId}/messages`),
+    sendMessage: (threadId: string, content: string) => api.post(`/chat/thread/${threadId}/message`, { content }),
+    
+    // Admin endpoints
+    getConfig: () => api.get('/chat/config'),
+    updateConfig: (config: ChatConfig) => api.put('/chat/config', config),
+    getModels: () => api.get('/chat/models'),
+    getAnalytics: (params: ChatAnalyticsRequest) => api.get('/chat/analytics', { params }),
+    
+    // Utility endpoints
+    getHealth: () => api.get('/chat/health'),
+    test: () => api.get('/chat/test'),
   },
 
   // File upload
