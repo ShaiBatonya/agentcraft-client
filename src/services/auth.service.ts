@@ -50,19 +50,15 @@ export class AuthService {
    */
   getGoogleOAuthUrl(): string {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const baseUrl = apiUrl.replace('/api', '');
     
-    // Ensure we have the correct callback URL
-    const currentOrigin = window.location.origin;
-    const callbackUrl = `${currentOrigin}/auth/callback`;
+    // Simplified URL construction - let the server handle the callback
+    const oauthUrl = `${apiUrl}/auth/google`;
     
     // Add state parameter for CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
     localStorage.setItem('oauth_state', state);
     
-    const oauthUrl = `${baseUrl}/api/auth/google?callback=${encodeURIComponent(callbackUrl)}&state=${state}`;
-    
-    return oauthUrl;
+    return `${oauthUrl}?state=${state}`;
   }
 
   /**

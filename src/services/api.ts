@@ -107,7 +107,7 @@ api.interceptors.response.use(
 
 // Offline mode request handler
 function handleOfflineRequest(config: unknown): Promise<AxiosResponse> {
-  const { method, url, data } = config as { method?: string; url?: string; data?: unknown };
+  const { method, url, data } = config as { method?: string; url?: string; data?: { title?: string; content?: string } };
   
   console.log(`🔄 Handling offline request: ${method?.toUpperCase()} ${url}`);
   
@@ -200,8 +200,10 @@ function handleOfflineRequest(config: unknown): Promise<AxiosResponse> {
       
       else if (url?.includes('/thread/') && method === 'delete') {
         const threadId = url.split('/').pop();
-        offlineData.threads = offlineData.threads.filter(t => t._id !== threadId);
-        delete offlineData.messages[threadId];
+        if (threadId) {
+          offlineData.threads = offlineData.threads.filter(t => t._id !== threadId);
+          delete offlineData.messages[threadId];
+        }
         
         resolve({
           data: {
