@@ -7,7 +7,7 @@ import { MainLayout } from '@/layout/MainLayout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 // Lazy load all pages for better performance
-const HomePage = React.lazy(() => import('@/pages/HomePage').then(module => ({ default: module.HomePage })));
+const HomePage = React.lazy(() => import('@/pages/HomePage'));
 const LoginPage = React.lazy(() => import('@/pages/LoginPage').then(module => ({ default: module.LoginPage })));
 const AuthCallbackPage = React.lazy(() => import('@/pages/AuthCallbackPage').then(module => ({ default: module.AuthCallbackPage })));
 const ChatPage = React.lazy(() => import('@/features/chat/pages/ChatPage'));

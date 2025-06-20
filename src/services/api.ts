@@ -42,31 +42,25 @@ export const api: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor for logging and auth
+// Request interceptor for auth
 api.interceptors.request.use(
   (config) => {
-    console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
   },
   (error) => {
-    console.error('❌ API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor for error handling and logging
+// Response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
     return response;
   },
   (error: AxiosError) => {
-    console.error(`❌ API Response Error: ${error.response?.status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.response?.data);
-    
-    // Handle specific error cases
-    if (error.response?.status === 401) {
-      console.warn('🔒 Unauthorized access detected');
-      // Don't automatically redirect here, let components handle it
+    // Log auth errors for debugging
+    if (error.config?.url?.includes('/auth/') || error.response?.status === 401) {
+      console.error(`API Error: ${error.response?.status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.response?.data);
     }
     
     return Promise.reject(error);
@@ -126,7 +120,6 @@ class ApiClient {
 
         if (attempt < API_CONFIG.retries - 1) {
           await this.delay(API_CONFIG.retryDelay * Math.pow(2, attempt)); // Exponential backoff
-          console.log(`🔄 Retrying request (attempt ${attempt + 2}/${API_CONFIG.retries})`);
           continue;
         }
 
@@ -176,28 +169,19 @@ export const apiService = {
     },
 
     async me(): Promise<ApiResponse<User>> {
-      console.log('🔍 API Service: Calling /auth/me endpoint');
-      console.log('🔍 API Service: Document cookies:', document.cookie);
-      
       const response = await apiClient.get<ApiResponse<User>>('/auth/me');
-      
-      console.log('✅ API Service: Raw response from /auth/me:', response);
       
       // The response is already in the correct format from the backend
       if (!response.data || !response.success) {
-        console.error('❌ API Service: Invalid response structure:', response);
         throw new ApiError('VALIDATION_ERROR', 'Invalid response structure from server');
       }
       
       // Validate the user data
       const userValidation = userSchema.safeParse(response.data);
       if (!userValidation.success) {
-        console.error('❌ API Service: User data validation failed:', userValidation.error);
-        console.error('❌ API Service: Raw user data:', response.data);
         throw new ApiError('VALIDATION_ERROR', 'Invalid user data format');
       }
       
-      console.log('✅ API Service: Validation successful:', userValidation.data);
       return response;
     },
 
@@ -209,13 +193,10 @@ export const apiService = {
   // Chat functionality
   chat: {
     async sendMessage(message: string): Promise<ApiResponse<{ reply: string }>> {
-      console.log('🔄 API Service: Sending chat message:', message);
-      
       const response = await apiClient.post<ApiResponse<{ reply: string }>>('/chat', {
         prompt: message // Backend expects "prompt" field
       });
       
-      console.log('✅ API Service: Chat response received:', response);
       return response;
     },
 
@@ -225,8 +206,6 @@ export const apiService = {
       before?: Date;
       after?: Date;
     }): Promise<ApiResponse<{ messages: Record<string, unknown>[]; total: number; hasMore: boolean }>> {
-      console.log('🔄 API Service: Getting chat history:', params);
-      
       const searchParams = new URLSearchParams();
       if (params?.limit) searchParams.set('limit', params.limit.toString());
       if (params?.before) searchParams.set('before', params.before.toISOString());
@@ -241,7 +220,6 @@ export const apiService = {
         `/chat/history?${searchParams}`
       );
       
-      console.log('✅ API Service: Chat history response received:', response);
       return response;
     },
 
@@ -252,8 +230,6 @@ export const apiService = {
       timestamp: Date;
       userId?: string;
     }): Promise<ApiResponse<{ id: string; saved: boolean }>> {
-      console.log('🔄 API Service: Saving message:', message.id);
-      
       const response = await apiClient.post<ApiResponse<{ id: string; saved: boolean }>>('/chat/message', {
         id: message.id,
         role: message.role,
@@ -262,7 +238,6 @@ export const apiService = {
         userId: message.userId,
       });
       
-      console.log('✅ API Service: Message save response:', response);
       return response;
     },
 

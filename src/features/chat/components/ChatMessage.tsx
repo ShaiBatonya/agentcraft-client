@@ -1,441 +1,270 @@
 // World-Class Responsive ChatMessage with advanced features and cinematic effects
-import React, { useState, useCallback, useMemo } from 'react';
-import type { Message, SearchHighlight } from '../types';
-import { useDeleteMessage, useRestoreMessage, useEditMessage } from '../store/chat.store';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import type { Message } from '../types';
 
 interface ChatMessageProps {
   message: Message;
-  isAnimating?: boolean;
-  highlights?: SearchHighlight[];
-  isSelected?: boolean;
-  onSelect?: (messageId: string) => void;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ 
-  message, 
-  isAnimating = false, 
-  highlights = [],
-  isSelected = false,
-  onSelect
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
+const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message }) => {
   const [isCopied, setIsCopied] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(message.content);
-  
-  const deleteMessage = useDeleteMessage();
-  const restoreMessage = useRestoreMessage();
-  const editMessage = useEditMessage();
+  const [isHovered, setIsHovered] = useState(false);
+  const messageRef = useRef<HTMLDivElement>(null);
   
   const isUser = message.role === 'user';
-  const isDeleted = message.deleted;
-  const isEdited = message.edited;
 
-  // Memoized timestamp formatting for performance
+  // Enhanced timestamp formatting
   const formattedTime = useMemo(() => {
     try {
-      let dateObj: Date;
+      const date = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
       
-      if (message.timestamp instanceof Date) {
-        dateObj = message.timestamp;
-      } else if (typeof message.timestamp === 'string' || typeof message.timestamp === 'number') {
-        dateObj = new Date(message.timestamp);
-      } else {
-        dateObj = new Date();
-      }
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
       
-      if (isNaN(dateObj.getTime())) {
-        dateObj = new Date();
-      }
-      
-      return new Intl.DateTimeFormat('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      }).format(dateObj);
-    } catch (error) {
-      console.warn('Invalid date in ChatMessage:', message.timestamp, error);
-      return new Intl.DateTimeFormat('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      }).format(new Date());
+      return date.toLocaleDateString([], { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } catch {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
     }
   }, [message.timestamp]);
 
-  // Optimized copy handler with feedback
+  // Enhanced copy handler with feedback
   const handleCopy = useCallback(async () => {
+    if (isCopied) return;
+    
     try {
-      const textToCopy = isDeleted ? (message.originalContent || message.content) : message.content;
-      await navigator.clipboard.writeText(textToCopy);
+      await navigator.clipboard.writeText(message.content);
       setIsCopied(true);
+      
+      // Haptic feedback on mobile
+      if ('vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+      
       setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
-      console.error('Failed to copy message:', error);
+      console.warn('Copy failed:', error);
     }
-  }, [message.content, message.originalContent, isDeleted]);
+  }, [message.content, isCopied]);
 
-  // Delete/Restore handlers
-  const handleDelete = useCallback(async () => {
-    try {
-      await deleteMessage(message.id);
-    } catch (error) {
-      console.error('Failed to delete message:', error);
-    }
-  }, [deleteMessage, message.id]);
-
-  const handleRestore = useCallback(() => {
-    restoreMessage(message.id);
-  }, [restoreMessage, message.id]);
-
-  // Edit handlers
-  const handleStartEdit = useCallback(() => {
-    setIsEditing(true);
-    setEditContent(message.content);
-  }, [message.content]);
-
-  const handleSaveEdit = useCallback(() => {
-    if (editContent.trim() !== message.content) {
-      editMessage(message.id, editContent.trim());
-    }
-    setIsEditing(false);
-  }, [editMessage, message.id, editContent, message.content]);
-
-  const handleCancelEdit = useCallback(() => {
-    setIsEditing(false);
-    setEditContent(message.content);
-  }, [message.content]);
-
-  // Click handler for message selection
-  const handleMessageClick = useCallback(() => {
-    if (onSelect && !isEditing) {
-      onSelect(message.id);
-    }
-  }, [onSelect, message.id, isEditing]);
-
-  // Apply search highlights to text
-  const applyHighlights = useCallback((text: string) => {
-    if (highlights.length === 0) return text;
-
-    let result = text;
-    let offset = 0;
-
-    // Sort highlights by start position
-    const sortedHighlights = [...highlights].sort((a, b) => a.start - b.start);
-
-    for (const highlight of sortedHighlights) {
-      const start = highlight.start + offset;
-      const end = highlight.end + offset;
-      const before = result.substring(0, start);
-      const highlighted = result.substring(start, end);
-      const after = result.substring(end);
+  // Enhanced message bubble animation
+  useEffect(() => {
+    if (messageRef.current) {
+      messageRef.current.style.transform = 'translateY(20px)';
+      messageRef.current.style.opacity = '0';
       
-      const highlightElement = `<mark class="bg-yellow-300/60 dark:bg-yellow-400/40 px-1 rounded font-medium">${highlighted}</mark>`;
-      result = before + highlightElement + after;
-      offset += highlightElement.length - highlighted.length;
+      requestAnimationFrame(() => {
+        if (messageRef.current) {
+          messageRef.current.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          messageRef.current.style.transform = 'translateY(0)';
+          messageRef.current.style.opacity = '1';
+        }
+      });
     }
+  }, []);
 
-    return result;
-  }, [highlights]);
-
-  // Enhanced avatar with improved mobile sizing
-  const renderAvatar = useCallback(() => {
-    const baseClasses = "relative group flex-shrink-0";
-    const avatarClasses = `
-      w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-white 
-      shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl
-      ${isDeleted ? 'opacity-50 grayscale' : ''}
-    `;
-
-    if (isUser) {
-      return (
-        <div className={baseClasses}>
-          <div className={`${avatarClasses} bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600`}>
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl opacity-0 group-hover:opacity-75 transition-opacity duration-300 blur-sm" />
-        </div>
-      );
-    }
-
-    return (
-      <div className={baseClasses}>
-        <div className={`${avatarClasses} bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600`}>
-          <div className="relative">
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364-.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 sm:w-3 sm:h-3">
-              <div className="w-1 h-1 bg-emerald-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
-            </div>
-          </div>
-        </div>
-        <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 rounded-2xl opacity-0 group-hover:opacity-60 transition-opacity duration-300 blur-sm animate-pulse" />
+  // Enhanced user avatar
+  const UserAvatar = useMemo(() => (
+    <div className="relative group flex-shrink-0">
+      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg border border-white/10 group-hover:shadow-indigo-500/30 transition-all duration-300">
+        <svg className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+        </svg>
       </div>
-    );
-  }, [isUser, isDeleted]);
+      
+      {/* Active indicator */}
+      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-slate-900 shadow-sm animate-pulse" />
+      
+      {/* Hover glow effect */}
+      <div className="absolute inset-0 h-8 w-8 sm:h-9 sm:w-9 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 opacity-0 blur-lg group-hover:opacity-40 transition-all duration-300" />
+    </div>
+  ), []);
 
-  // Enhanced message content with editing support and highlighting
-  const renderMessageContent = useCallback(() => {
-    if (isEditing) {
-      return (
-        <div className="space-y-3">
-          <textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            className={`
-              w-full p-3 rounded-lg border resize-none min-h-[100px]
-              ${isUser 
-                ? 'bg-white/20 border-white/30 text-white placeholder-white/50' 
-                : 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100'
-              }
-              focus:outline-none focus:ring-2 focus:ring-accent-500/50
-            `}
-            placeholder="Edit your message..."
-            autoFocus
-          />
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSaveEdit}
-              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              Save
-            </button>
-            <button
-              onClick={handleCancelEdit}
-              className="px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      );
-    }
+  // Enhanced AI avatar
+  const AIAvatar = useMemo(() => (
+    <div className="relative group flex-shrink-0">
+      <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 flex items-center justify-center shadow-lg border border-white/10 group-hover:shadow-emerald-500/30 transition-all duration-300">
+        <svg className="h-4 w-4 sm:h-4.5 sm:w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+      
+      {/* AI processing indicator */}
+      <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-blue-500 border-2 border-slate-900 shadow-sm">
+        <div className="h-full w-full rounded-full bg-blue-400 animate-ping opacity-75" />
+      </div>
+      
+      {/* Hover glow effect */}
+      <div className="absolute inset-0 h-8 w-8 sm:h-9 sm:w-9 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 opacity-0 blur-lg group-hover:opacity-40 transition-all duration-300" />
+    </div>
+  ), []);
 
-    const lines = message.content.split('\n');
-    const highlightedContent = applyHighlights(message.content);
-    
-    return (
-      <div className={`
-        relative z-10 text-sm sm:text-base leading-relaxed break-words
-        ${isUser ? 'text-white' : 'text-slate-800 dark:text-slate-200'}
-        ${isDeleted ? 'opacity-60 italic' : ''}
-        ${isSelected ? 'font-medium' : ''}
-      `}>
-        {highlights.length > 0 ? (
-          <div dangerouslySetInnerHTML={{ __html: highlightedContent }} />
+  // Enhanced message actions
+  const MessageActions = useMemo(() => (
+    <div className={`
+      flex items-center gap-1 opacity-0 transition-all duration-200 
+      ${isHovered ? 'opacity-100 translate-y-0' : 'translate-y-2'}
+    `}>
+      {/* Copy button */}
+      <button
+        onClick={handleCopy}
+        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all duration-200 touch-manipulation group relative"
+        title={isCopied ? 'Copied!' : 'Copy message'}
+        disabled={isCopied}
+      >
+        {isCopied ? (
+          <svg className="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
         ) : (
-          lines.map((line: string, index: number) => (
-            <React.Fragment key={index}>
-              {line}
-              {index < lines.length - 1 && <br />}
-            </React.Fragment>
-          ))
+          <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
         )}
         
-        {/* Edited indicator */}
-        {isEdited && !isDeleted && (
-          <span className="ml-2 text-xs opacity-70">(edited)</span>
-        )}
-      </div>
-    );
-  }, [message.content, isEditing, editContent, isUser, isDeleted, isSelected, isEdited, highlights, applyHighlights, handleSaveEdit, handleCancelEdit]);
+        {/* Tooltip */}
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+          {isCopied ? 'Copied!' : 'Copy'}
+        </div>
+      </button>
 
-  // Enhanced actions menu
-  const renderActions = useCallback(() => {
-    if (isEditing) return null;
-
-    return (
-      <div className={`
-        flex items-center gap-1 opacity-0 group-hover:opacity-100 
-        transition-all duration-300
-        ${isHovered ? 'translate-y-0' : 'translate-y-1'}
-      `}>
-        {/* Copy Button */}
-        <button
-          onClick={handleCopy}
-          className={`
-            p-1.5 sm:p-2 rounded-lg transition-all duration-200 
-            text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 
-            hover:bg-slate-100 dark:hover:bg-slate-800 
-            touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto
-            flex items-center justify-center
-          `}
-          title={isCopied ? 'Copied!' : 'Copy message'}
-          aria-label={isCopied ? 'Copied!' : 'Copy message'}
-        >
-          {isCopied ? (
-            <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-          ) : (
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          )}
-        </button>
-
-        {/* Edit Button (for user messages) */}
-        {isUser && !isDeleted && (
-          <button
-            onClick={handleStartEdit}
-            className={`
-              p-1.5 sm:p-2 rounded-lg transition-all duration-200 
-              text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 
-              hover:bg-slate-100 dark:hover:bg-slate-800 
-              touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto
-              flex items-center justify-center
-            `}
-            title="Edit message"
-            aria-label="Edit message"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-        )}
-
-        {/* Delete/Restore Button */}
-        <button
-          onClick={isDeleted ? handleRestore : handleDelete}
-          className={`
-            p-1.5 sm:p-2 rounded-lg transition-all duration-200 
-            ${isDeleted 
-              ? 'text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20' 
-              : 'text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
-            }
-            touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto
-            flex items-center justify-center
-          `}
-          title={isDeleted ? 'Restore message' : 'Delete message'}
-          aria-label={isDeleted ? 'Restore message' : 'Delete message'}
-        >
-          {isDeleted ? (
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-            </svg>
-          ) : (
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          )}
-        </button>
-
-        {/* Reaction Button (for AI messages) */}
-        {!isUser && !isDeleted && (
-          <button
-            className={`
-              p-1.5 sm:p-2 rounded-lg transition-all duration-200 
-              text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 
-              hover:bg-slate-100 dark:hover:bg-slate-800 
-              touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-auto sm:min-h-auto
-              flex items-center justify-center
-            `}
-            title="Add reaction"
-            aria-label="Add reaction"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
-        )}
-      </div>
-    );
-  }, [isEditing, isHovered, handleCopy, isCopied, isUser, isDeleted, handleStartEdit, handleDelete, handleRestore]);
+      {/* More actions button */}
+      <button
+        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all duration-200 touch-manipulation group"
+        title="More options"
+      >
+        <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+        </svg>
+      </button>
+    </div>
+  ), [isCopied, isHovered, handleCopy]);
 
   return (
-    <div
-      className={`
-        flex items-start gap-3 sm:gap-4 mb-6 sm:mb-8 group transition-all duration-500 cursor-pointer
-        ${isUser ? 'flex-row-reverse' : 'flex-row'}
-        ${isAnimating ? 'animate-in slide-in-from-bottom-4 fade-in duration-500' : ''}
-        ${isHovered ? 'scale-[1.005] sm:scale-[1.01]' : ''}
-        ${isSelected ? 'ring-2 ring-accent-500/50 rounded-lg p-2 bg-accent-500/5' : ''}
-        ${isDeleted ? 'opacity-75' : ''}
-      `}
+    <div 
+      ref={messageRef}
+      className={`group relative px-4 sm:px-6 py-3 sm:py-4 transition-all duration-200 hover:bg-white/2 ${
+        isUser ? 'ml-8 sm:ml-16' : 'mr-8 sm:mr-16'
+      }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={handleMessageClick}
+      style={{ 
+        willChange: 'background-color, transform, opacity',
+        contain: 'layout style'
+      }}
     >
-      {/* Avatar */}
-      <div className="mt-1">
-        {renderAvatar()}
+      <div className={`flex gap-3 sm:gap-4 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+        {/* Enhanced Avatar */}
+        <div className="flex-shrink-0 mt-1">
+          {isUser ? UserAvatar : AIAvatar}
+        </div>
+
+        {/* Message Content Container */}
+        <div className="flex-1 min-w-0 space-y-1 sm:space-y-2">
+          {/* Message Header */}
+          <div className={`flex items-center gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+            <span className="text-sm font-semibold text-white/90">
+              {isUser ? 'You' : 'AgentCraft AI'}
+            </span>
+            <div className="flex items-center gap-1">
+              {!isUser && (
+                <div className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-full border border-emerald-500/30">
+                  AI
+                </div>
+              )}
+              <span className="text-xs text-white/50 font-mono">
+                {formattedTime}
+              </span>
+            </div>
+          </div>
+
+          {/* Enhanced Message Bubble */}
+          <div className={`relative group/bubble ${isUser ? 'flex justify-end' : 'flex justify-start'}`}>
+            <div className={`
+              relative max-w-xs sm:max-w-md lg:max-w-lg xl:max-w-xl 
+              px-4 py-3 sm:px-5 sm:py-4 rounded-2xl shadow-lg
+              transition-all duration-300 hover:shadow-xl
+              ${isUser 
+                ? 'message-bubble-user bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white' 
+                : 'message-bubble-ai bg-white/5 text-white border border-white/10 backdrop-blur-xl hover:bg-white/10 hover:border-white/20'
+              }
+            `}>
+              {/* Message Text with enhanced typography */}
+              <div 
+                className="leading-relaxed"
+                style={{ 
+                  fontFamily: 'var(--font-family-sans)',
+                  fontSize: '15px',
+                  lineHeight: '1.5',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word'
+                }}
+              >
+                {/* Enhanced message content rendering */}
+                {message.content.split('\n').map((line, index, array) => (
+                  <React.Fragment key={index}>
+                    {line}
+                    {index < array.length - 1 && <br />}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Message status indicator for user messages */}
+              {isUser && (
+                <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-white/20 flex items-center justify-center">
+                  <div className="h-1.5 w-1.5 rounded-full bg-white/60" />
+                </div>
+              )}
+
+              {/* AI processing animation for AI messages */}
+              {!isUser && (
+                <div className="absolute -bottom-1 -left-1 h-3 w-3 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Enhanced Actions Bar */}
+          <div className={`flex items-center gap-2 mt-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+            {MessageActions}
+          </div>
+        </div>
       </div>
 
-      {/* Message Content */}
+      {/* Reaction bar (hidden for now, ready for future implementation) */}
       <div className={`
-        flex flex-col max-w-[85%] sm:max-w-[80%] lg:max-w-[75%]
-        ${isUser ? 'items-end' : 'items-start'}
+        absolute ${isUser ? 'right-20' : 'left-20'} -bottom-2 
+        flex items-center gap-1 opacity-0 transition-all duration-200
+        ${isHovered ? 'opacity-100 translate-y-0' : 'translate-y-2'}
       `}>
-        {/* Message Bubble */}
-        <div
-          className={`
-            relative px-4 py-3 sm:px-6 sm:py-4 transition-all duration-500 transform
-            ${isHovered ? 'scale-[1.02] shadow-2xl' : 'shadow-lg'}
-            ${isUser
-              ? 'bg-gradient-to-br from-blue-500 to-purple-600 ml-auto rounded-[1.5rem] rounded-br-lg'
-              : 'bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-[1.5rem] rounded-bl-lg border border-white/20 dark:border-slate-700/50'
-            }
-            ${isDeleted ? 'bg-opacity-50 dark:bg-opacity-50' : ''}
-            ${isSelected ? 'ring-2 ring-accent-400/30' : ''}
-          `}
-        >
-          {/* Message tail - responsive sizing */}
-          <div
-            className={`
-              absolute top-4 w-3 h-3 sm:w-4 sm:h-4 transform rotate-45 transition-all duration-300
-              ${isUser
-                ? 'right-[-6px] sm:right-[-8px] bg-gradient-to-br from-blue-500 to-purple-600'
-                : 'left-[-6px] sm:left-[-8px] bg-white/90 dark:bg-slate-800/90 border-l border-b border-white/20 dark:border-slate-700/50'
-              }
-              ${isDeleted ? 'opacity-50' : ''}
-            `}
-          />
-
-          {/* Shimmer Effect on Hover */}
-          {isHovered && !isDeleted && (
-            <div className="absolute inset-0 rounded-[1.5rem] overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full animate-shimmer" />
-            </div>
-          )}
-
-          {/* Message Text */}
-          {renderMessageContent()}
-
-          {/* Message Status for User Messages */}
-          {isUser && !isDeleted && (
-            <div className="absolute bottom-2 right-3 sm:right-4 opacity-0 group-hover:opacity-100 transition-all duration-300">
-              <div className="flex items-center gap-0.5">
-                <svg className="w-3 h-3 text-blue-200" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                <svg className="w-3 h-3 text-blue-100 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Timestamp and Actions */}
-        <div className={`
-          mt-1.5 sm:mt-2 px-2 flex items-center gap-2 sm:gap-3 text-xs sm:text-sm
-          ${isUser ? 'flex-row-reverse' : 'flex-row'}
-        `}>
-          <span className={`
-            text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 
-            transition-all duration-300 font-mono
-            ${isHovered ? 'translate-y-0' : 'translate-y-1'}
-          `}>
-            {formattedTime}
-          </span>
-          
-          {/* Action Buttons - Mobile Optimized */}
-          {renderActions()}
-        </div>
+        {/* Quick reactions */}
+        {['👍', '❤️', '😊', '🔥'].map((emoji, index) => (
+          <button
+            key={emoji}
+            className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm transition-all duration-200 hover:scale-110"
+            style={{ animationDelay: `${index * 50}ms` }}
+            title={`React with ${emoji}`}
+          >
+            {emoji}
+          </button>
+        ))}
       </div>
     </div>
   );
-}); 
+});
+
+ChatMessage.displayName = 'ChatMessage';
+
+export default ChatMessage; 

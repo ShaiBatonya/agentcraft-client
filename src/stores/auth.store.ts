@@ -8,19 +8,22 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isHydrated: boolean;
   error: string | null;
+  lastActivity: number | null;
 }
 
 interface AuthActions {
   // Google OAuth will handle login via redirect, so we mainly need these actions:
   getCurrentUser: () => Promise<void>;
   logout: () => Promise<void>;
-  checkAuthStatus: () => Promise<void>;
+  checkAuthStatus: (skipCache?: boolean) => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
   setUser: (user: User | null) => void;
   // Enhanced logout with redirect
-  logoutAndRedirect: () => Promise<void>;
+  logoutAndRedirect: (redirectUrl?: string) => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -28,12 +31,14 @@ type AuthStore = AuthState & AuthActions;
 export const useAuthStore = create<AuthStore>()(
   devtools(
     persist(
-      immer((set) => ({
+      immer((set, get) => ({
         // Initial state
         user: null,
         isAuthenticated: false,
         isLoading: false,
+        isHydrated: false,
         error: null,
+        lastActivity: null,
 
         // Actions
         getCurrentUser: async () => {
@@ -50,6 +55,7 @@ export const useAuthStore = create<AuthStore>()(
               state.isAuthenticated = true;
               state.isLoading = false;
               state.error = null;
+              state.lastActivity = Date.now();
             });
           } catch (error) {
             set(state => {
@@ -70,39 +76,53 @@ export const useAuthStore = create<AuthStore>()(
 
             await authService.logout();
             
+            // Clear all state
             set(state => {
               state.user = null;
               state.isAuthenticated = false;
               state.isLoading = false;
               state.error = null;
+              state.lastActivity = null;
             });
-          } catch (error) {
-            console.warn('Logout API call failed, but clearing local state anyway:', error);
+
+            // Clear any OAuth parameters
+            authService.clearOAuthParams();
+            
+          } catch {
             // Even if logout fails on server, clear local state
             set(state => {
               state.user = null;
               state.isAuthenticated = false;
               state.isLoading = false;
-              state.error = null; // Don't show error for logout
+              state.error = null;
+              state.lastActivity = null;
             });
+            
+            // Clear any OAuth parameters
+            authService.clearOAuthParams();
           }
         },
 
-        logoutAndRedirect: async () => {
-          console.log('🚪 AuthStore: Starting logout with redirect');
-          try {
-            // Clear state immediately for better UX
-            set(state => {
-              state.isLoading = true;
-              state.error = null;
-            });
+        logoutAndRedirect: async (redirectUrl = '/') => {
+          const { isAuthenticated, user } = get();
+          
+          // Only proceed if user is authenticated
+          if (!isAuthenticated || !user) {
+            window.location.href = redirectUrl;
+            return;
+          }
 
+          set(state => {
+            state.isLoading = true;
+            state.error = null;
+          });
+
+          try {
             // Call server logout (don't wait if it fails)
             try {
               await authService.logout();
-              console.log('✅ AuthStore: Server logout successful');
-            } catch (error) {
-              console.warn('⚠️ AuthStore: Server logout failed, continuing with local cleanup:', error);
+            } catch {
+              // Ignore server logout errors
             }
             
             // Clear all local state
@@ -111,32 +131,46 @@ export const useAuthStore = create<AuthStore>()(
               state.isAuthenticated = false;
               state.isLoading = false;
               state.error = null;
+              state.lastActivity = null;
             });
 
             // Clear any OAuth parameters from URL
             authService.clearOAuthParams();
-
-            // Redirect to homepage
-            console.log('🏠 AuthStore: Redirecting to homepage');
-            window.location.href = '/';
             
-          } catch (error) {
-            console.error('❌ AuthStore: Logout error:', error);
+            // Redirect
+            window.location.href = redirectUrl;
+            
+          } catch {
             // Ensure state is cleared even on error
             set(state => {
               state.user = null;
               state.isAuthenticated = false;
               state.isLoading = false;
               state.error = null;
+              state.lastActivity = null;
             });
             
             // Force redirect anyway
-            window.location.href = '/';
+            window.location.href = redirectUrl;
           }
         },
 
-        checkAuthStatus: async () => {
-          console.log('🔄 AuthStore: Starting checkAuthStatus');
+        checkAuthStatus: async (skipCache = false) => {
+          const state = get();
+          
+          // Skip check if already loading
+          if (state.isLoading) {
+            return;
+          }
+          
+          // For OAuth callbacks, always skip cache
+          const isOAuthCallback = window.location.pathname === '/auth/callback';
+          const shouldSkipCache = skipCache || isOAuthCallback;
+          
+          // Skip check if recently checked (unless forced or OAuth callback)
+          if (!shouldSkipCache && state.lastActivity && Date.now() - state.lastActivity < 30000) {
+            return;
+          }
           
           // Create a timeout promise
           const timeoutPromise = new Promise((_, reject) => {
@@ -150,8 +184,6 @@ export const useAuthStore = create<AuthStore>()(
               state.isLoading = true;
               state.error = null;
             });
-
-            console.log('🔄 AuthStore: Calling authService.checkAuthStatus');
             
             // Race between auth check and timeout
             const result = await Promise.race([
@@ -159,27 +191,21 @@ export const useAuthStore = create<AuthStore>()(
               timeoutPromise
             ]) as { isAuthenticated: boolean; user?: User };
             
-            console.log('✅ AuthStore: Auth check result:', { 
-              isAuthenticated: result.isAuthenticated, 
-              hasUser: !!result.user 
-            });
-            
             set(state => {
               state.user = result.user || null;
               state.isAuthenticated = result.isAuthenticated;
               state.isLoading = false;
               state.error = null;
+              state.lastActivity = Date.now();
             });
-            
-            console.log('✅ AuthStore: State updated successfully');
           } catch (error) {
-            console.error('❌ AuthStore: Auth check failed:', error);
             // If auth check fails, user is not authenticated
             set(state => {
               state.user = null;
               state.isAuthenticated = false;
               state.isLoading = false;
               state.error = null; // Don't show error for failed auth check
+              state.lastActivity = Date.now();
             });
             
             // Only throw if it's a real error, not auth failure
@@ -189,10 +215,40 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
+        initialize: async () => {
+          const state = get();
+          
+          // Skip if already initialized
+          if (state.isHydrated) {
+            return;
+          }
+          
+          try {
+            set(state => {
+              state.isLoading = true;
+              state.error = null;
+            });
+            
+            await get().checkAuthStatus(true); // Force check on initialization
+            
+            set(state => {
+              state.isHydrated = true;
+              state.isLoading = false;
+            });
+                     } catch {
+             set(state => {
+               state.isHydrated = true;
+               state.isLoading = false;
+               state.error = null;
+             });
+           }
+        },
+
         setUser: (user: User | null) => {
           set(state => {
             state.user = user;
             state.isAuthenticated = !!user;
+            state.lastActivity = Date.now();
           });
         },
 
@@ -210,19 +266,25 @@ export const useAuthStore = create<AuthStore>()(
       })),
       {
         name: 'auth-store',
+        version: 1,
         // Only persist user and auth status, not loading/error states
         partialize: (state) => ({
           user: state.user,
           isAuthenticated: state.isAuthenticated,
+          lastActivity: state.lastActivity,
         }),
-        // Add storage event listener to sync logout across tabs
-        onRehydrateStorage: () => (state) => {
-          if (state) {
-            console.log('🔄 AuthStore: Rehydrated from storage', {
-              isAuthenticated: state.isAuthenticated,
-              hasUser: !!state.user
-            });
-          }
+        // Add migration function for version updates
+        migrate: (persistedState) => {
+          return persistedState as AuthState;
+        },
+        // Handle rehydration
+        onRehydrateStorage: () => {
+          return (state, error) => {
+            if (!error && state) {
+              // Mark as hydrated after successful rehydration
+              state.isHydrated = true;
+            }
+          };
         },
       }
     ),
@@ -232,11 +294,12 @@ export const useAuthStore = create<AuthStore>()(
   )
 );
 
-// Selectors for better performance
+// Optimized selectors for better performance
 export const useUser = () => useAuthStore(state => state.user);
 export const useIsAuthenticated = () => useAuthStore(state => state.isAuthenticated);
 export const useAuthLoading = () => useAuthStore(state => state.isLoading);
 export const useAuthError = () => useAuthStore(state => state.error);
+export const useAuthHydrated = () => useAuthStore(state => state.isHydrated);
 
 // Actions
 export const useAuthActions = () => useAuthStore(state => ({
@@ -247,4 +310,5 @@ export const useAuthActions = () => useAuthStore(state => ({
   clearError: state.clearError,
   setLoading: state.setLoading,
   setUser: state.setUser,
+  initialize: state.initialize,
 })); 

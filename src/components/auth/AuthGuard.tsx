@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '@/stores/auth.store';
+import { useAuthStore, useAuthHydrated } from '@/stores/auth.store';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -14,22 +14,23 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   fallbackPath = '/login',
 }) => {
   const location = useLocation();
-  const { user, isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
+  const { user, isAuthenticated, isLoading, initialize } = useAuthStore();
+  const isHydrated = useAuthHydrated();
 
-  // Check auth status on mount
+  // Initialize auth state on mount
   useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      checkAuthStatus();
+    if (!isHydrated) {
+      initialize();
     }
-  }, [isAuthenticated, isLoading, checkAuthStatus]);
+  }, [isHydrated, initialize]);
 
-  // Show loading while checking authentication
-  if (isLoading) {
+  // Show loading while initializing or checking authentication
+  if (!isHydrated || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
         <div className="flex flex-col items-center space-y-4">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-500 border-t-transparent" />
-          <p className="text-white/70 text-sm">Checking authentication...</p>
+          <p className="text-white/70 text-sm">Loading...</p>
         </div>
       </div>
     );

@@ -71,7 +71,7 @@ export const SupportPage: React.FC = () => {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement form submission
-    console.log('Support form submitted:', contactForm);
+    // Form submitted
     // Reset form
     setContactForm({
       name: '',

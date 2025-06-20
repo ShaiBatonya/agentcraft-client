@@ -11,13 +11,10 @@ export class AuthService {
    * Get current authenticated user
    */
   async getCurrentUser(): Promise<User> {
-    console.log('🔄 AuthService: Getting current user from API');
     try {
       const response = await apiService.auth.me();
-      console.log('✅ AuthService: API response received', { success: response.success });
       return response.data;
     } catch (error) {
-      console.error('❌ AuthService: API call failed:', error);
       if (error instanceof ApiError && error.status === 401) {
         throw new AuthenticationError('User not authenticated');
       }
@@ -31,36 +28,40 @@ export class AuthService {
   async logout(): Promise<void> {
     try {
       await apiService.auth.logout();
-    } catch (error) {
-      // Log error but don't throw - logout should always succeed locally
-      console.error('Logout error:', error);
-    }
+          } catch {
+        // Don't throw - logout should always succeed locally
+      }
   }
 
   /**
-   * Check authentication status
+   * Check authentication status with enhanced debugging
    */
   async checkAuthStatus(): Promise<{ isAuthenticated: boolean; user?: User }> {
-    console.log('🔄 AuthService: Checking authentication status');
     try {
-      console.log('🔄 AuthService: Calling getCurrentUser');
       const user = await this.getCurrentUser();
-      console.log('✅ AuthService: Authentication successful', { userId: user.id, email: user.email });
       return { isAuthenticated: true, user };
-    } catch (error) {
-      console.warn('⚠️ AuthService: Authentication failed:', error);
-      return { isAuthenticated: false };
-    }
+          } catch {
+        return { isAuthenticated: false };
+      }
   }
 
   /**
-   * Get Google OAuth URL
+   * Get Google OAuth URL with proper callback
    */
   getGoogleOAuthUrl(): string {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     const baseUrl = apiUrl.replace('/api', '');
-    const oauthUrl = `${baseUrl}/api/auth/google`;
-    console.log('🔍 AuthService: OAuth URL:', oauthUrl);
+    
+    // Ensure we have the correct callback URL
+    const currentOrigin = window.location.origin;
+    const callbackUrl = `${currentOrigin}/auth/callback`;
+    
+    // Add state parameter for CSRF protection
+    const state = Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('oauth_state', state);
+    
+    const oauthUrl = `${baseUrl}/api/auth/google?callback=${encodeURIComponent(callbackUrl)}&state=${state}`;
+    
     return oauthUrl;
   }
 
@@ -68,7 +69,8 @@ export class AuthService {
    * Initiate Google OAuth login
    */
   initiateGoogleLogin(): void {
-    window.location.href = this.getGoogleOAuthUrl();
+    const oauthUrl = this.getGoogleOAuthUrl();
+    window.location.href = oauthUrl;
   }
 
   /**
@@ -80,13 +82,53 @@ export class AuthService {
   }
 
   /**
-   * Clear OAuth parameters from URL
+   * Verify OAuth state for security
+   */
+  verifyOAuthState(): boolean {
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnedState = urlParams.get('state');
+    const storedState = localStorage.getItem('oauth_state');
+    
+    if (!returnedState || !storedState) {
+      return false;
+    }
+    
+    const isValid = returnedState === storedState;
+    
+    // Clean up stored state
+    if (isValid) {
+      localStorage.removeItem('oauth_state');
+    }
+    
+    return isValid;
+  }
+
+  /**
+   * Enhanced OAuth callback detection
+   */
+  isOAuthCallback(): boolean {
+    return window.location.pathname === '/auth/callback';
+  }
+
+  /**
+   * Clear OAuth parameters from URL with enhanced cleaning
    */
   clearOAuthParams(): void {
     const url = new URL(window.location.href);
-    url.searchParams.delete('error');
-    url.searchParams.delete('auth');
-    window.history.replaceState({}, document.title, url.pathname + url.search);
+    const hadParams = url.searchParams.has('error') || 
+                     url.searchParams.has('auth') || 
+                     url.searchParams.has('code') ||
+                     url.searchParams.has('state');
+    
+    if (hadParams) {
+      const paramsToRemove = ['error', 'auth', 'code', 'state', 'scope'];
+      
+      paramsToRemove.forEach(param => {
+        url.searchParams.delete(param);
+      });
+      
+      window.history.replaceState({}, document.title, url.pathname + url.search);
+    }
   }
 
   /**
@@ -99,12 +141,12 @@ export class AuthService {
         authenticated: response.data.authenticated,
         status: 'online'
       };
-    } catch {
-      return {
-        authenticated: false,
-        status: 'offline'
-      };
-    }
+          } catch {
+        return {
+          authenticated: false,
+          status: 'offline'
+        };
+      }
   }
 }
 

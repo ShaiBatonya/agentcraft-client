@@ -59,12 +59,10 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
 
         // Actions
         initializeChat: async () => {
-          console.log('🔄 ChatStore: Initializing chat...');
           const state = get();
           
           // Only initialize once per session
           if (state.isInitialized) {
-            console.log('✅ ChatStore: Already initialized');
             return;
           }
 
@@ -72,10 +70,7 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
             const authStore = useAuthStore.getState();
             
             if (authStore.isAuthenticated && authStore.user) {
-              console.log('🔄 ChatStore: Loading chat history for authenticated user');
               await get().loadChatHistory();
-            } else {
-              console.log('📝 ChatStore: User not authenticated, skipping history load');
             }
             
             // Clear old messages (older than 7 days)
@@ -85,10 +80,7 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
               ...state,
               isInitialized: true,
             });
-            
-            console.log('✅ ChatStore: Chat initialized successfully');
-          } catch (error) {
-            console.error('❌ ChatStore: Failed to initialize chat:', error);
+          } catch {
             set({
               ...state,
               error: 'Failed to load chat history',
@@ -98,11 +90,9 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         },
 
         loadChatHistory: async () => {
-          console.log('🔄 ChatStore: Loading chat history from backend...');
           const authStore = useAuthStore.getState();
           
           if (!authStore.isAuthenticated || !authStore.user) {
-            console.log('⚠️ ChatStore: Cannot load history - user not authenticated');
             return;
           }
 
@@ -113,7 +103,6 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
             }));
 
             const history = await ChatService.getChatHistory();
-            console.log('✅ ChatStore: Chat history loaded:', history.length, 'messages');
             
             set(state => ({
               ...state,
@@ -121,7 +110,6 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
               lastSyncTimestamp: Date.now(),
             }));
           } catch (error) {
-            console.error('❌ ChatStore: Failed to load chat history:', error);
             set(state => ({
               ...state,
               error: error instanceof Error ? error.message : 'Failed to load chat history',
@@ -176,10 +164,9 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
               };
             });
 
-            console.log('✅ ChatStore: Message sent and response received');
+
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
-            console.error('❌ ChatStore: Send message failed:', error);
             
             set(state => {
               // Mark the user message as failed
@@ -198,12 +185,10 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         },
 
         clearOldMessages: () => {
-          console.log('🧹 ChatStore: Clearing messages older than 7 days...');
           const sevenDaysAgo = new Date();
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
           
           set(state => {
-            const originalCount = state.messages.length;
             const filteredMessages = state.messages.filter(message => {
               try {
                 // Handle both Date objects and string timestamps
@@ -213,21 +198,14 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
                 
                 // Skip messages with invalid dates
                 if (isNaN(messageDate.getTime())) {
-                  console.warn('ChatStore: Message with invalid timestamp found:', message.id);
                   return false; // Remove messages with invalid dates
                 }
                 
                 return messageDate > sevenDaysAgo;
-              } catch (error) {
-                console.warn('ChatStore: Error processing message timestamp:', message.id, error);
+              } catch {
                 return false; // Remove messages that can't be processed
               }
             });
-            const removedCount = originalCount - filteredMessages.length;
-            
-            if (removedCount > 0) {
-              console.log(`🧹 ChatStore: Removed ${removedCount} old messages`);
-            }
             
             return {
               ...state,
@@ -239,8 +217,6 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         // Advanced Features
 
         deleteMessage: async (messageId: string) => {
-          console.log('🗑️ ChatStore: Deleting message:', messageId);
-          
           set(state => ({
             ...state,
             messages: state.messages.map(msg => 
@@ -253,9 +229,7 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
           // TODO: Send delete request to backend
           try {
             // await ChatService.deleteMessage(messageId);
-            console.log('✅ ChatStore: Message marked as deleted');
-          } catch (error) {
-            console.error('❌ ChatStore: Failed to delete message on backend:', error);
+          } catch {
             // Rollback the deletion
             set(state => ({
               ...state,
@@ -269,8 +243,6 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         },
 
         restoreMessage: (messageId: string) => {
-          console.log('♻️ ChatStore: Restoring message:', messageId);
-          
           set(state => ({
             ...state,
             messages: state.messages.map(msg => 
@@ -282,8 +254,6 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         },
 
         editMessage: (messageId: string, newContent: string) => {
-          console.log('✏️ ChatStore: Editing message:', messageId);
-          
           set(state => ({
             ...state,
             messages: state.messages.map(msg => 
@@ -474,7 +444,6 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         },
 
         clearMessages: () => {
-          console.log('🧹 ChatStore: Clearing all messages');
           set(state => ({
             ...state,
             messages: [],
@@ -486,7 +455,6 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         },
 
         clearChat: () => {
-          console.log('🧹 ChatStore: Clearing entire chat state');
           set(state => ({
             ...state,
             messages: [],
@@ -531,18 +499,12 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
         version: 2, // Incremented for new features
         onRehydrateStorage: () => (state) => {
           if (state) {
-            console.log('🔄 ChatStore: Rehydrated from storage', {
-              messageCount: state.messages?.length || 0,
-              lastSync: state.lastSyncTimestamp ? new Date(state.lastSyncTimestamp) : 'never'
-            });
-            
             // Convert string timestamps back to Date objects after rehydration
             if (state.messages && state.messages.length > 0) {
               state.messages = state.messages.map(message => ({
                 ...message,
                 timestamp: new Date(message.timestamp), // Ensure timestamp is a Date object
               }));
-              console.log('✅ ChatStore: Converted timestamps to Date objects');
             }
             
             // Clean old messages on rehydration

@@ -1,110 +1,121 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/auth.store';
 
-export const CTASection: React.FC = () => {
+export const CTASection: React.FC = React.memo(() => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
+
+  const handleGetStarted = useCallback(() => {
+    if (isAuthenticated) {
+      navigate('/chat');
+    } else {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
   return (
-    <section className="relative w-full overflow-hidden">
-      {/* Background Elements - Full Screen Width */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent-500/20 via-purple-500/20 to-pink-500/20" />
-      <div className="absolute inset-0 bg-section-gradient" />
-      
-      {/* Animated Background Orbs */}
+    <section 
+      className="relative w-full bg-gradient-to-b from-[#24243e] via-[#302b63] to-[#0f0c29] py-24 sm:py-32"
+      style={{ 
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        contentVisibility: 'auto',
+        containIntrinsicSize: '600px'
+      }}
+    >
+      {/* Enhanced background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-80 w-80 rounded-full bg-accent-500/30 blur-3xl animate-float" />
-        <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-purple-500/30 blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 h-64 w-64 rounded-full bg-blue-500/20 blur-2xl animate-float" style={{ animationDelay: '4s' }} />
-        <div className="absolute top-20 right-20 h-72 w-72 rounded-full bg-pink-500/15 blur-3xl animate-float" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-20 left-20 h-64 w-64 rounded-full bg-accent-500/20 blur-3xl animate-float" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-0 left-1/4 h-96 w-96 rounded-full bg-indigo-500/15 blur-3xl animate-float" />
+        <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-purple-500/15 blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 h-64 w-64 rounded-full bg-pink-500/10 blur-2xl animate-float" style={{ animationDelay: '4s' }} />
+        <div className="absolute -top-10 right-10 h-72 w-72 rounded-full bg-indigo-500/10 blur-3xl animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute -bottom-10 left-10 h-96 w-96 rounded-full bg-purple-500/10 blur-3xl animate-float" style={{ animationDelay: '3s' }} />
       </div>
 
-      <div className="relative w-full section-spacing">
-        <div className="container-content">
-          <div className="text-center space-y-12">
-            {/* Status Badge */}
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-xl">
+      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Enhanced content card */}
+        <div className="relative">
+          {/* Enhanced glow effect */}
+          <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 blur-2xl" />
+          
+          <div className="relative rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-black/20 p-8 sm:p-12 lg:p-16 backdrop-blur-xl text-center">
+            {/* Status indicator */}
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-white/10 bg-white/5 text-sm font-medium text-white/90 backdrop-blur-xl mb-8">
               <div className="relative">
-                <div className="h-2 w-2 rounded-full bg-accent-400 animate-pulse" />
-                <div className="absolute inset-0 h-2 w-2 rounded-full bg-accent-400 animate-ping opacity-75" />
+                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="absolute inset-0 h-2 w-2 rounded-full bg-emerald-400 animate-ping opacity-75" />
               </div>
-              <span>Ready to Transform Your Workflow?</span>
+              <span>Ready to deploy</span>
+              <div className="h-3 w-px bg-white/20" />
+              <span className="text-white/70">Production-grade</span>
             </div>
 
-            {/* Main Content */}
-            <div className="space-y-8">
-              <h2 className="text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
-                Start Building the{' '}
-                <span className="text-gradient-brand">Future</span>
-                <br />
-                Today
+            {/* Main content */}
+            <div className="space-y-6 sm:space-y-8">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
+                Ready to Transform Your
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
+                  AI Conversations?
+                </span>
               </h2>
               
-              <p className="mx-auto max-w-3xl text-xl text-white/80 leading-relaxed sm:text-2xl">
-                Join thousands of innovators already using AgentCraft to revolutionize their AI workflows.
-                <span className="text-gradient-brand font-semibold block mt-2">
-                  No credit card required. Start in seconds.
-                </span>
+              <p className="mx-auto max-w-3xl text-lg sm:text-xl md:text-2xl font-medium text-slate-200 leading-relaxed">
+                Join thousands of developers who trust AgentCraft for their mission-critical AI applications. 
+                Experience the difference that quality engineering makes.
               </p>
+
+              <div className="flex flex-col items-center gap-4 sm:gap-6">
+                <p className="text-base sm:text-lg text-slate-300">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 font-semibold">
+                    No setup required.
+                  </span>
+                  {' '}Start chatting in seconds.
+                </p>
+              </div>
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-8">
-              <Link to="/chat" className="w-full sm:w-auto">
-                <button className="btn-primary animate-glow-pulse group text-lg px-12 py-4 min-h-[60px]">
-                  <svg className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Get Started Free
-                  <svg className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            {/* Enhanced action buttons */}
+            <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 mt-10 sm:mt-12">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-lg sm:max-w-none">
+                <button
+                  onClick={handleGetStarted}
+                  className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent"
+                >
+                  <span className="text-lg">Start Building Today</span>
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </button>
-              </Link>
-              
-              <button className="btn-secondary group w-full sm:w-auto text-lg px-12 py-4 min-h-[60px]">
-                <svg className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-                </svg>
-                View Documentation
-              </button>
-            </div>
-
-            {/* Additional Info */}
-            <div className="flex flex-wrap items-center justify-center gap-8 text-white/60 md:gap-12">
-              <div className="flex items-center gap-2 text-sm">
-                <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Free Forever Plan
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <svg className="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Enterprise Security
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <svg className="h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM12 18a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V18.75A.75.75 0 0112 18zM2.25 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM18 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H18.75A.75.75 0 0118 12z" />
-                </svg>
-                24/7 Support
+                
+                <button className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-transparent">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1M9 16v-2a4 4 0 118 0v2M12 3v1m6.364-.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <span>View Documentation</span>
+                </button>
               </div>
             </div>
 
-            {/* Social Proof */}
-            <div className="border-t border-white/10 pt-12">
-              <p className="text-sm text-white/60 mb-8">
-                Trusted by teams at
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-                {/* Mock Company Logos */}
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="flex h-12 w-24 items-center justify-center rounded-lg bg-white/5 text-white/40 text-sm font-semibold border border-white/5"
-                  >
-                    Logo {index + 1}
-                  </div>
-                ))}
+            {/* Enhanced feature highlights */}
+            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 md:gap-12 mt-12 sm:mt-16 text-white/60">
+              <div className="flex items-center gap-2 text-sm">
+                <svg className="h-4 w-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="whitespace-nowrap">Free to start</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <svg className="h-4 w-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="whitespace-nowrap">No credit card required</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <svg className="h-4 w-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="whitespace-nowrap">Enterprise support</span>
               </div>
             </div>
           </div>
@@ -112,4 +123,6 @@ export const CTASection: React.FC = () => {
       </div>
     </section>
   );
-}; 
+});
+
+CTASection.displayName = 'CTASection'; 

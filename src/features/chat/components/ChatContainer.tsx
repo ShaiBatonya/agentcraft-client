@@ -1,6 +1,6 @@
 // World-Class Responsive ChatContainer with advanced features and auto-scroll
 import React, { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import { ChatMessage } from './ChatMessage';
+import ChatMessage from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { ChatToolbar } from './ChatToolbar';
 import { 
@@ -11,9 +11,7 @@ import {
   useClearError,
   useInitializeChat,
   useFilteredMessages,
-  useSearchQuery,
-  useSelectedMessage,
-  useSetSelectedMessage
+  useSearchQuery
 } from '../store/chat.store';
 import { useAuthStore } from '@/stores/auth.store';
 
@@ -25,13 +23,11 @@ export const ChatContainer: React.FC<ChatContainerProps> = React.memo(({ classNa
   const messages = useMessages();
   const filteredMessages = useFilteredMessages();
   const searchQuery = useSearchQuery();
-  const selectedMessageId = useSelectedMessage();
   const isLoading = useChatLoading();
   const error = useChatError();
   const isInitialized = useChatInitialized();
   const clearError = useClearError();
   const initializeChat = useInitializeChat();
-  const setSelectedMessage = useSetSelectedMessage();
   const { isAuthenticated } = useAuthStore();
   
   // Local state for UI
@@ -108,10 +104,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = React.memo(({ classNa
     }
   }, [isInitialized, scrollToBottom, searchQuery]);
 
-  // Handle message selection
-  const handleMessageSelect = useCallback((messageId: string) => {
-    setSelectedMessage(selectedMessageId === messageId ? null : messageId);
-  }, [setSelectedMessage, selectedMessageId]);
+
 
   // Memoized empty state for performance
   const EmptyState = useMemo(() => {
@@ -275,14 +268,11 @@ export const ChatContainer: React.FC<ChatContainerProps> = React.memo(({ classNa
               EmptyState
             ) : (
               <div className="space-y-0">
-                {/* Render messages with animation support */}
-                {displayMessages.map((message, index) => (
+                {/* Render messages with simplified props */}
+                {displayMessages.map((message) => (
                   <ChatMessage 
                     key={message.id} 
                     message={message}
-                    isAnimating={index === displayMessages.length - 1 && !isLoading && !searchQuery.trim()}
-                    isSelected={selectedMessageId === message.id}
-                    onSelect={handleMessageSelect}
                   />
                 ))}
                 

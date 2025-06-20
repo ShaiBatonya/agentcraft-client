@@ -13,7 +13,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ className = '' }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    console.log('🚪 UserProfile: Starting logout process');
+
     try {
       setIsLoggingOut(true);
       // Use the enhanced logout with redirect

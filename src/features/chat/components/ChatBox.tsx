@@ -1,6 +1,6 @@
 // Premium ChatBox component with modern styling and smooth animations
 import React, { useEffect, useRef } from 'react';
-import { ChatMessage } from './ChatMessage';
+import ChatMessage from './ChatMessage';
 import { useChatStore } from '../store/chat.store';
 
 export const ChatBox: React.FC = () => {

@@ -8,12 +8,12 @@ export class ChatService {
    */
   static async sendMessage(request: ChatRequest): Promise<ChatResponse> {
     try {
-      console.log('🔄 Chat Service: Sending message request:', request);
+  
       
       // Use the centralized API service
       const response = await apiService.chat.sendMessage(request.prompt);
       
-      console.log('✅ Chat Service: API response received:', response);
+
 
       // Transform backend response to frontend format
       // Backend returns: { success: true, data: { reply: "..." } }
@@ -23,7 +23,7 @@ export class ChatService {
           response: response.data.reply
         };
         
-        console.log('✅ Chat Service: Transformed response:', transformedResponse);
+  
         return transformedResponse;
       } else {
         console.error('❌ Chat Service: Invalid response format:', response);
@@ -55,7 +55,7 @@ export class ChatService {
    */
   static async getChatHistory(params?: ChatHistoryRequest): Promise<Message[]> {
     try {
-      console.log('🔄 Chat Service: Loading chat history:', params);
+  
       
       // Calculate 7 days ago for filtering
       const sevenDaysAgo = new Date();
@@ -70,7 +70,7 @@ export class ChatService {
         });
         
         if (response.success && response.data?.messages) {
-          console.log('✅ Chat Service: History loaded from backend:', response.data.messages.length, 'messages');
+    
           
           // Transform backend messages to frontend format
           const messages: Message[] = response.data.messages.map((msg: Record<string, unknown>) => ({
@@ -90,7 +90,7 @@ export class ChatService {
       
       // Fallback: Return empty array if backend is unavailable
       // The chat store will handle local persistence
-      console.log('📝 Chat Service: Returning empty history (backend unavailable)');
+
       return [];
       
     } catch (error) {
@@ -107,7 +107,7 @@ export class ChatService {
    */
   static async saveMessage(message: Message): Promise<boolean> {
     try {
-      console.log('🔄 Chat Service: Saving message to backend:', message.id);
+  
       
       const response = await apiService.chat.saveMessage({
         id: message.id,
@@ -118,7 +118,7 @@ export class ChatService {
       });
       
       if (response.success) {
-        console.log('✅ Chat Service: Message saved to backend:', message.id);
+
         return true;
       } else {
         console.warn('⚠️ Chat Service: Failed to save message:', response);
@@ -135,10 +135,10 @@ export class ChatService {
    */
   static async healthCheck(): Promise<{ status: string }> {
     try {
-      console.log('🔄 Chat Service: Performing health check');
+  
       
       const response = await apiService.chat.healthCheck();
-      console.log('✅ Chat Service: Health check response:', response);
+  
       
       return {
         status: response.success ? 'healthy' : 'unhealthy'

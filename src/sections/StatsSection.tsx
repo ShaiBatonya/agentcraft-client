@@ -1,120 +1,113 @@
 import React from 'react';
 
-export const StatsSection: React.FC = () => {
+export const StatsSection: React.FC = React.memo(() => {
   const stats = [
     {
-      value: '50M+',
-      label: 'Messages Processed',
-      description: 'Conversations powered by AI',
-      icon: (
-        <svg className="h-10 w-10 text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      ),
-      gradient: 'from-accent-500/20 to-blue-500/20',
+      number: '10k+',
+      label: 'Active Users',
+      description: 'Developers and teams using AgentCraft daily'
     },
     {
-      value: '99.99%',
+      number: '99.9%',
       label: 'Uptime',
-      description: 'Always available when you need it',
-      icon: (
-        <svg className="h-10 w-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      gradient: 'from-emerald-500/20 to-green-500/20',
+      description: 'Enterprise-grade reliability and performance'
     },
     {
-      value: '<50ms',
+      number: '<50ms',
       label: 'Response Time',
-      description: 'Lightning-fast AI responses',
-      icon: (
-        <svg className="h-10 w-10 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-        </svg>
-      ),
-      gradient: 'from-orange-500/20 to-yellow-500/20',
+      description: 'Lightning-fast AI responses and interactions'
     },
     {
-      value: '∞',
-      label: 'Possibilities',
-      description: 'Unlimited creative potential',
-      icon: (
-        <svg className="h-10 w-10 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-        </svg>
-      ),
-      gradient: 'from-purple-500/20 to-pink-500/20',
-    },
+      number: '24/7',
+      label: 'Support',
+      description: 'Round-the-clock assistance and monitoring'
+    }
   ];
 
   return (
-    <section className="relative w-full bg-section-gradient">
-      {/* Background Elements */}
+    <section 
+      className="relative w-full bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e] py-24 sm:py-32"
+      style={{ 
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden',
+        contentVisibility: 'auto',
+        containIntrinsicSize: '600px'
+      }}
+    >
+      {/* Enhanced background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/3 left-20 h-64 w-64 rounded-full bg-emerald-500/5 blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-1/4 right-20 h-80 w-80 rounded-full bg-accent-500/5 blur-3xl animate-float" style={{ animationDelay: '4s' }} />
+        <div className="absolute top-1/4 left-0 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 h-80 w-80 rounded-full bg-purple-500/10 blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 h-64 w-64 rounded-full bg-pink-500/5 blur-2xl" />
       </div>
 
-      <div className="relative w-full section-spacing">
-        <div className="container-content">
-          {/* Section Header */}
-          <div className="text-center space-y-6 mb-20">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-xl">
-              <div className="h-2 w-2 rounded-full bg-accent-400 animate-pulse" />
-              Real-time Analytics
-            </div>
-            
-            <h2 className="text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl">
-              Trusted by{' '}
-              <span className="text-gradient-brand">Thousands</span>
-            </h2>
-            
-            <p className="mx-auto max-w-3xl text-xl text-white/70 leading-relaxed">
-              Join the growing community of innovators who rely on AgentCraft for their AI needs.
-            </p>
-          </div>
+      <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
+        <div className="text-center space-y-4 sm:space-y-6 mb-16 sm:mb-20">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
+            Trusted by
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
+              Thousands of Developers
+            </span>
+          </h2>
+          <p className="mx-auto max-w-3xl text-lg sm:text-xl text-slate-300 leading-relaxed">
+            Join a growing community of developers, startups, and enterprises who rely on 
+            AgentCraft for their mission-critical AI conversations.
+          </p>
+        </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="card-luxury group text-center space-y-6 animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                {/* Icon with gradient background */}
-                <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${stat.gradient} transition-all duration-300 group-hover:scale-110`}>
-                  {stat.icon}
-                </div>
-                
-                {/* Value */}
-                <div className="space-y-2">
-                  <div className="text-5xl font-extrabold tracking-tight text-white md:text-6xl">
-                    {stat.value}
+        {/* Stats grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          {stats.map((stat, index) => (
+            <div
+              key={index}
+              className="group relative"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              {/* Enhanced glow effect */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className="relative h-full text-center rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-black/20 p-6 sm:p-8 backdrop-blur-xl transition-all duration-300 group-hover:border-white/20 group-hover:bg-gradient-to-br group-hover:from-white/10 group-hover:to-black/30">
+                {/* Number */}
+                <div className="mb-4">
+                  <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 group-hover:from-indigo-300 group-hover:via-purple-400 group-hover:to-pink-400 transition-all duration-300">
+                    {stat.number}
                   </div>
-                  <div className="text-lg font-semibold text-white/90">
+                </div>
+
+                {/* Label */}
+                <div className="mb-3">
+                  <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-slate-100 transition-colors duration-300">
                     {stat.label}
-                  </div>
-                  <div className="text-sm text-white/60 leading-relaxed">
-                    {stat.description}
-                  </div>
+                  </h3>
                 </div>
-              </div>
-            ))}
-          </div>
 
-          {/* Bottom CTA */}
-          <div className="mt-20 text-center">
-            <p className="text-lg text-white/60">
-              Ready to join them?{' '}
-              <a href="/chat" className="text-gradient-brand font-semibold hover:underline transition-all duration-300">
-                Start your free trial →
-              </a>
-            </p>
+                {/* Description */}
+                <p className="text-sm sm:text-base text-slate-400 group-hover:text-slate-300 transition-colors duration-300 leading-relaxed">
+                  {stat.description}
+                </p>
+
+                {/* Hover indicator */}
+                <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300 group-hover:w-full rounded-b-2xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom section */}
+        <div className="text-center mt-16 sm:mt-20">
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-white/90 text-sm font-medium">Live Stats</span>
+            </div>
+            <div className="h-4 w-px bg-white/20" />
+            <span className="text-white/70 text-sm">Updated in real-time</span>
           </div>
         </div>
       </div>
     </section>
   );
-}; 
+});
+
+StatsSection.displayName = 'StatsSection'; 
