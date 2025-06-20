@@ -1,5 +1,35 @@
 // Types and interfaces for chat feature
 
+// New thread persistence types
+export interface ChatThread {
+  _id: string;
+  title: string;
+  updatedAt: string;
+  createdAt?: string;
+}
+
+export interface ChatMessage {
+  _id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+  threadId?: string;
+}
+
+// Thread-related API response types
+export interface CreateThreadResponse {
+  _id: string;
+  title: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SendMessageResponse {
+  userMsg: ChatMessage;
+  assistantMsg: ChatMessage;
+}
+
 export interface ChatRequest {
   prompt: string;
 }
@@ -29,8 +59,7 @@ export interface MessageReaction {
   timestamp: Date;
 }
 
-// Keep legacy alias for compatibility
-export type ChatMessage = Message;
+
 
 export interface ChatState {
   messages: Message[];

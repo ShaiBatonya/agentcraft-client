@@ -1,14 +1,18 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { QueryProvider } from '@/context/query.provider';
 import { router } from '@/router';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useAuthStore, useAuthHydrated, useAuthLoading } from '@/stores/auth.store';
+import ToastContainer from '@/components/ui/ToastContainer';
+import { useToasts, useRemoveToast } from '@/stores/toast.store';
 
 function App() {
   const { initialize } = useAuthStore();
   const isHydrated = useAuthHydrated();
   const isLoading = useAuthLoading();
+  const toasts = useToasts();
+  const removeToast = useRemoveToast();
 
   // Initialize auth state on app mount
   useEffect(() => {
@@ -37,6 +41,7 @@ function App() {
       <QueryProvider>
         <RouterProvider router={router} />
       </QueryProvider>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </ErrorBoundary>
   );
 }

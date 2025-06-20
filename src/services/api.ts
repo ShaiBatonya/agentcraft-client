@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import type {
   ApiResponse,
   ChatSession,
@@ -42,30 +42,210 @@ export const api: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor for auth
+// Offline mode simulation
+let isOfflineMode = false;
+interface OfflineMessage {
+  _id: string;
+  threadId: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+}
+
+interface OfflineThread {
+  _id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const offlineData: {
+  threads: OfflineThread[];
+  messages: Record<string, OfflineMessage[]>;
+  threadCounter: number;
+  messageCounter: number;
+} = {
+  threads: [],
+  messages: {},
+  threadCounter: 1,
+  messageCounter: 1,
+};
+
+// Request interceptor for debugging
 api.interceptors.request.use(
   (config) => {
+    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
+    console.error('❌ API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling and offline mode
 api.interceptors.response.use(
-  (response) => {
+  (response: AxiosResponse) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
     return response;
   },
-  (error: AxiosError) => {
-    // Log auth errors for debugging
-    if (error.config?.url?.includes('/auth/') || error.response?.status === 401) {
-      console.error(`API Error: ${error.response?.status} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, error.response?.data);
+  async (error: AxiosError) => {
+    console.error(`❌ API Error: ${error.response?.status || 'NETWORK'} ${error.config?.url}`);
+    
+    // Check if server is unreachable
+    if (!error.response && (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK')) {
+      console.log('🔌 Server unreachable, enabling offline mode...');
+      isOfflineMode = true;
+      
+      // Handle offline requests
+      return handleOfflineRequest(error.config);
     }
     
     return Promise.reject(error);
   }
 );
+
+// Offline mode request handler
+function handleOfflineRequest(config: unknown): Promise<AxiosResponse> {
+  const { method, url, data } = config as { method?: string; url?: string; data?: unknown };
+  
+  console.log(`🔄 Handling offline request: ${method?.toUpperCase()} ${url}`);
+  
+  // Simulate API responses for different endpoints
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      if (url === '/chat/threads' && method === 'get') {
+        resolve({
+          data: offlineData.threads,
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+        } as AxiosResponse);
+      }
+      
+      else if (url === '/chat/thread' && method === 'post') {
+        const thread = {
+          _id: `offline_thread_${offlineData.threadCounter++}`,
+          title: data?.title || 'New Chat (Offline)',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        offlineData.threads.unshift(thread);
+        offlineData.messages[thread._id] = [];
+        
+        resolve({
+          data: thread,
+          status: 201,
+          statusText: 'Created',
+          headers: {},
+          config,
+        } as AxiosResponse);
+      }
+      
+      else if (url?.includes('/messages') && method === 'get') {
+        const threadId = url.split('/')[2];
+        const messages = offlineData.messages[threadId] || [];
+        
+        resolve({
+          data: messages,
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+        } as AxiosResponse);
+      }
+      
+      else if (url?.includes('/message') && method === 'post') {
+        const threadId = url.split('/')[2];
+        const content = data?.content || '';
+        
+        const userMessage = {
+          _id: `offline_msg_${offlineData.messageCounter++}`,
+          threadId,
+          role: 'user' as const,
+          content: content,
+          createdAt: new Date().toISOString(),
+        };
+        
+        const assistantMessage = {
+          _id: `offline_msg_${offlineData.messageCounter++}`,
+          threadId,
+          role: 'assistant' as const,
+          content: `🔌 Offline Mode: Your message "${content}" has been received. This is a simulated response since the server is not available.`,
+          createdAt: new Date().toISOString(),
+        };
+        
+        if (!offlineData.messages[threadId]) {
+          offlineData.messages[threadId] = [];
+        }
+        
+        offlineData.messages[threadId].push(userMessage, assistantMessage);
+        
+        resolve({
+          data: {
+            success: true,
+            messages: {
+              userMessage,
+              assistantMessage,
+            }
+          },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+        } as AxiosResponse);
+      }
+      
+      else if (url?.includes('/thread/') && method === 'delete') {
+        const threadId = url.split('/').pop();
+        offlineData.threads = offlineData.threads.filter(t => t._id !== threadId);
+        delete offlineData.messages[threadId];
+        
+        resolve({
+          data: {
+            success: true,
+            message: 'Thread deleted successfully (offline mode)'
+          },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+        } as AxiosResponse);
+      }
+      
+      else {
+        // Default offline response
+        resolve({
+          data: {
+            success: false,
+            error: 'Offline mode - limited functionality available'
+          },
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: {},
+          config,
+        } as AxiosResponse);
+      }
+    }, 500); // Simulate network delay
+  });
+}
+
+// Utility function to check if we're in offline mode
+export const isOffline = () => isOfflineMode;
+
+// Function to manually enable offline mode for testing
+export const enableOfflineMode = () => {
+  isOfflineMode = true;
+  console.log('🔌 Offline mode enabled manually');
+};
+
+// Function to disable offline mode
+export const disableOfflineMode = () => {
+  isOfflineMode = false;
+  console.log('🌐 Online mode restored');
+};
 
 // Enhanced fetch wrapper with retries and error handling
 class ApiClient {

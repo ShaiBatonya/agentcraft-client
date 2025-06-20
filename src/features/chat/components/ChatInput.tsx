@@ -1,10 +1,8 @@
 // Ultra-Premium ChatInput with cinematic effects and immersive design
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { 
-  useSendMessage, 
-  useChatLoading, 
-  useChatError 
-} from '../store/chat.store';
+import { useSelectedThreadId, useLoading } from '@/stores/chat.store';
+import { useSendMessage } from '../hooks/useMessages';
+import { useCreateThread } from '../hooks/useThreads';
 import { useAuthStore } from '@/stores/auth.store';
 
 const MAX_MESSAGE_LENGTH = 4000;
@@ -15,11 +13,18 @@ const ChatInput: React.FC = React.memo(() => {
   const [input, setInput] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const sendMessage = useSendMessage();
-  const isLoading = useChatLoading();
-  const error = useChatError();
+  
+  // Store hooks
+  const selectedThreadId = useSelectedThreadId();
+  const loading = useLoading();
   const { isAuthenticated, user } = useAuthStore();
+  
+  // Action hooks
+  const sendMessage = useSendMessage();
+  const createThread = useCreateThread();
 
   // Enhanced auto-resize with smooth transitions
   const adjustTextareaHeight = useCallback(() => {
@@ -43,21 +48,48 @@ const ChatInput: React.FC = React.memo(() => {
     if (value.length <= MAX_MESSAGE_LENGTH) {
       setInput(value);
       
+      // Clear any previous errors
+      if (error) {
+        setError(null);
+      }
+      
       // Adjust height after state update
       requestAnimationFrame(() => {
         adjustTextareaHeight();
       });
     }
-  }, [adjustTextareaHeight]);
+  }, [adjustTextareaHeight, error]);
 
   // Enhanced form submission with better UX
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     const trimmedInput = input.trim();
-    if (!trimmedInput || isLoading || !isAuthenticated || isComposing) return;
+    if (!trimmedInput || loading || !isAuthenticated || isComposing) return;
 
     try {
+      setError(null);
+      console.log('ChatInput handleSubmit:', { selectedThreadId, trimmedInput });
+      
+      // CRITICAL FIX: Ensure we have a valid thread ID
+      let threadId = selectedThreadId;
+      if (!threadId) {
+        console.log('🔧 No thread selected, creating new thread...');
+        const newThread = await createThread();
+        console.log('✅ New thread created:', newThread);
+        threadId = newThread._id;
+        console.log('🎯 Using new thread ID:', threadId);
+      } else {
+        console.log('🎯 Using existing selected thread ID:', threadId);
+      }
+      
+      // Double-check we have a valid thread ID
+      if (!threadId) {
+        throw new Error('❌ Failed to get valid thread ID');
+      }
+      
+      console.log('📤 About to send message with threadId:', threadId);
+      
       // Optimistic UI update
       setInput('');
       
@@ -67,20 +99,23 @@ const ChatInput: React.FC = React.memo(() => {
       }
       
       // Send message
-      await sendMessage(trimmedInput);
+      await sendMessage(threadId, trimmedInput);
       
       // Focus back to input for continuous typing
       if (textareaRef.current) {
         textareaRef.current.focus();
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      setError(err instanceof Error ? err.message : 'Failed to send message');
+      
       // Restore input on error
       setInput(trimmedInput);
       requestAnimationFrame(() => {
         adjustTextareaHeight();
       });
     }
-  }, [input, isLoading, isAuthenticated, isComposing, sendMessage, adjustTextareaHeight]);
+  }, [input, loading, isAuthenticated, isComposing, selectedThreadId, sendMessage, createThread, adjustTextareaHeight]);
 
   // Enhanced keyboard handler with more shortcuts
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -129,8 +164,8 @@ const ChatInput: React.FC = React.memo(() => {
 
   // Memoized validation states
   const canSend = useMemo(() => 
-    input.trim().length > 0 && !isLoading && isAuthenticated && !isComposing,
-    [input, isLoading, isAuthenticated, isComposing]
+    input.trim().length > 0 && !loading && isAuthenticated && !isComposing,
+    [input, loading, isAuthenticated, isComposing]
   );
 
   const isNearLimit = useMemo(() => 
@@ -157,7 +192,7 @@ const ChatInput: React.FC = React.memo(() => {
             : 'bg-white/5 text-white/40 cursor-not-allowed border border-white/10'
           }
         `}
-        aria-label={isLoading ? 'Sending...' : 'Send message'}
+        aria-label={loading ? 'Sending...' : 'Send message'}
       >
         {/* Background gradient glow effect */}
         {canSend && (
@@ -166,7 +201,7 @@ const ChatInput: React.FC = React.memo(() => {
         
         {/* Button content */}
         <div className="relative z-10">
-          {isLoading ? (
+          {loading ? (
             <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <svg 
@@ -182,7 +217,7 @@ const ChatInput: React.FC = React.memo(() => {
         </div>
       </button>
     </div>
-  ), [canSend, isLoading]);
+  ), [canSend, loading]);
 
   // Enhanced attachment button (for future features)
   const AttachmentButton = useMemo(() => (
@@ -208,6 +243,15 @@ const ChatInput: React.FC = React.memo(() => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
             <span className="text-red-400 text-sm flex-1">{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-400 hover:text-red-300 transition-colors"
+              aria-label="Dismiss error"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
@@ -263,9 +307,11 @@ const ChatInput: React.FC = React.memo(() => {
               placeholder={
                 !isAuthenticated 
                   ? "Please log in to send messages..." 
-                  : "Type your message here..."
+                  : selectedThreadId
+                    ? "Type your message here..."
+                    : "Start a new conversation..."
               }
-              disabled={!isAuthenticated || isLoading}
+              disabled={!isAuthenticated || loading}
               className={`
                 w-full resize-none bg-transparent text-white placeholder-white/40 
                 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed 
@@ -321,7 +367,7 @@ const ChatInput: React.FC = React.memo(() => {
           <div className="flex items-center gap-4">
             {!isAuthenticated ? (
               <span className="text-white/50">Please log in to start chatting</span>
-            ) : isLoading ? (
+            ) : loading ? (
               <div className="flex items-center gap-2 text-white/60">
                 <div className="w-1 h-1 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '0ms' }} />
                 <div className="w-1 h-1 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -341,11 +387,19 @@ const ChatInput: React.FC = React.memo(() => {
             )}
           </div>
 
-          {/* AI status indicator - Mobile responsive */}
+          {/* Thread status and AI indicator - Mobile responsive */}
           {isAuthenticated && (
-            <div className="flex items-center gap-2 text-white/50 self-start sm:self-auto">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>AI Online</span>
+            <div className="flex items-center gap-3 text-white/50 self-start sm:self-auto">
+              {selectedThreadId && (
+                <div className="flex items-center gap-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+                  <span>Thread Active</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>AI Online</span>
+              </div>
             </div>
           )}
         </div>

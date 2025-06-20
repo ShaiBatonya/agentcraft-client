@@ -1,7 +1,9 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { useChatThreads, useActiveThread } from '@/features/chat/hooks/useChatThreads';
-import ChatItem from './ChatItem';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useThreads, useSelectedThreadId, useThreadsLoading } from '@/stores/chat.store';
+import { useLoadThreads, useCreateThread, useSelectThread } from '../hooks/useThreads';
+
 import NewChatButton from './NewChatButton';
+import ThreadItem from './ThreadItem';
 
 interface ChatSidebarProps {
   isCollapsed: boolean;
@@ -16,19 +18,35 @@ const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { threads, createNewThread } = useChatThreads();
-  const activeThread = useActiveThread();
+  
+  // Store hooks
+  const threads = useThreads();
+  const selectedThreadId = useSelectedThreadId();
+  const threadsLoading = useThreadsLoading();
+  
+  // Action hooks
+  const loadThreads = useLoadThreads();
+  const createThread = useCreateThread();
+  const selectThread = useSelectThread();
+
+  // Load threads on component mount - only once
+  useEffect(() => {
+    if (threads.length === 0 && !threadsLoading) {
+      loadThreads().catch(console.error);
+    }
+  }, []); // Empty dependency array to run only on mount
 
   // Enhanced search filtering with better performance
   const filteredThreads = useMemo(() => {
+    // Ensure threads is always an array
+    const safeThreads = Array.isArray(threads) ? threads : [];
     const query = searchQuery.toLowerCase().trim();
     
-    if (!query) return threads;
+    if (!query) return safeThreads;
     
-    return threads
+    return safeThreads
       .filter(thread => 
-        thread.title.toLowerCase().includes(query) ||
-        thread.messages.some(msg => msg.content.toLowerCase().includes(query))
+        thread.title.toLowerCase().includes(query)
       )
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }, [threads, searchQuery]);
@@ -42,9 +60,37 @@ const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
     setSearchQuery('');
   }, []);
 
-  const handleNewChat = useCallback(() => {
-    createNewThread();
-  }, [createNewThread]);
+  const handleNewChat = useCallback(async () => {
+    try {
+      await createThread();
+    } catch (error) {
+      console.error('Failed to create new thread:', error);
+    }
+  }, [createThread]);
+
+  const handleThreadSelect = useCallback(async (threadId: string) => {
+    try {
+      console.log('🎯 ChatSidebar: Thread selected:', threadId);
+      // The new useSelectThread hook now handles both selection and message loading
+      await selectThread(threadId);
+      console.log('✅ ChatSidebar: Thread selection complete');
+      
+      // Auto-close sidebar on mobile after selection
+      if (isMobile) {
+        onToggleCollapse();
+      }
+    } catch (error) {
+      console.error('❌ ChatSidebar: Failed to select thread:', error);
+    }
+  }, [selectThread, isMobile, onToggleCollapse]);
+
+  const handleMobileThreadSelect = useCallback(() => {
+    // This is now handled in handleThreadSelect for consistency
+    // Keeping this for backward compatibility if needed
+    if (isMobile) {
+      onToggleCollapse();
+    }
+  }, [isMobile, onToggleCollapse]);
 
   const handleSearchFocus = useCallback(() => {
     setIsSearchFocused(true);
@@ -98,13 +144,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
 
         {/* Collapsed Chat List Preview */}
         <div className="flex-1 p-2 space-y-2 overflow-y-auto scrollbar-hidden">
-          {threads.slice(0, 6).map((thread) => (
-            <div
-              key={thread.id}
+          {(Array.isArray(threads) ? threads : []).slice(0, 6).map((thread) => (
+            <button
+              key={thread._id}
+              onClick={() => handleThreadSelect(thread._id)}
               className={`
                 w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold
                 transition-all duration-200 cursor-pointer border
-                ${activeThread?.id === thread.id
+                ${selectedThreadId === thread._id
                   ? 'bg-gradient-to-br from-indigo-600/20 to-purple-600/20 text-white border-indigo-500/30'
                   : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border-transparent hover:border-white/10'
                 }
@@ -112,7 +159,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
               title={thread.title}
             >
               {thread.title.charAt(0).toUpperCase()}
-            </div>
+            </button>
           ))}
         </div>
 
@@ -150,7 +197,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             <div>
               <h2 className="text-lg font-bold text-white">Chats</h2>
               <div className="text-xs text-white/60 font-medium">
-                {threads.length} conversation{threads.length !== 1 ? 's' : ''}
+                {threadsLoading ? 'Loading...' : `${Array.isArray(threads) ? threads.length : 0} conversation${(Array.isArray(threads) ? threads.length : 0) !== 1 ? 's' : ''}`}
               </div>
             </div>
           </div>
@@ -245,7 +292,16 @@ const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
         )}
 
         <div className="p-3">
-          {filteredThreads.length === 0 ? (
+          {threadsLoading ? (
+            /* Loading State */
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-16 bg-white/5 rounded-2xl"></div>
+                </div>
+              ))}
+            </div>
+          ) : filteredThreads.length === 0 ? (
             /* Enhanced Empty State */
             <div className="text-center py-12 px-4">
               {searchQuery ? (
@@ -295,13 +351,15 @@ const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
             <div className="space-y-1">
               {filteredThreads.map((thread, index) => (
                 <div
-                  key={thread.id}
-                  className="animate-fade-in-up"
+                  key={thread._id}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <ChatItem
+                  <ThreadItem
                     thread={thread}
-                    isActive={activeThread?.id === thread.id}
+                    isActive={selectedThreadId === thread._id}
+                    onSelect={handleThreadSelect}
+                    onMobileSelect={handleMobileThreadSelect}
+                    className="animate-fade-in-up"
                   />
                 </div>
               ))}
@@ -315,7 +373,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = React.memo(({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-white/60">
             <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-mono">{threads.length} chat{threads.length !== 1 ? 's' : ''}</span>
+            <span className="font-mono">{Array.isArray(threads) ? threads.length : 0} chat{(Array.isArray(threads) ? threads.length : 0) !== 1 ? 's' : ''}</span>
             {searchQuery && (
               <>
                 <span>•</span>
