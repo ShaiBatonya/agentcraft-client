@@ -126,7 +126,7 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
             content: prompt,
             timestamp: new Date(),
             userId: authStore.user?.id || 'anonymous',
-            synced: false, // Not yet saved to backend
+            synced: false,
           };
 
           // Add user message immediately for responsive UX
@@ -138,7 +138,10 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
           }));
 
           try {
-            // Send message to backend
+            // Save user message to backend
+            const userMessageSaved = await ChatService.saveMessage(userMessage);
+            
+            // Send message to get AI response
             const response = await ChatService.sendMessage({ prompt });
             
             const assistantMessage: Message = {
@@ -147,23 +150,25 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
               content: response.response,
               timestamp: new Date(),
               userId: authStore.user?.id || 'anonymous',
-              synced: false, // Will be synced by backend
+              synced: false,
             };
 
+            // Save assistant message to backend
+            const assistantMessageSaved = await ChatService.saveMessage(assistantMessage);
+
             set(state => {
-              // Mark user message as synced and add assistant response
+              // Update messages with sync status
               const updatedMessages = state.messages.map(msg => 
-                msg.id === userMessage.id ? { ...msg, synced: true } : msg
+                msg.id === userMessage.id ? { ...msg, synced: userMessageSaved } : msg
               );
               
               return {
                 ...state,
-                messages: [...updatedMessages, assistantMessage],
+                messages: [...updatedMessages, { ...assistantMessage, synced: assistantMessageSaved }],
                 isLoading: false,
                 lastSyncTimestamp: Date.now(),
               };
             });
-
 
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
@@ -490,27 +495,36 @@ export const useChatStore = create<ChatStoreState & ChatActions>()(
       }),
       {
         name: 'chat-store',
-        // Only persist messages and sync timestamp, not loading/error states
+        // Persist all necessary chat data
         partialize: (state) => ({
-          messages: state.messages,
+          messages: state.messages.filter(msg => !msg.deleted), // Don't persist deleted messages
           lastSyncTimestamp: state.lastSyncTimestamp,
+          isInitialized: state.isInitialized
         }),
-        // Storage version for future migrations
-        version: 2, // Incremented for new features
+        version: 2,
         onRehydrateStorage: () => (state) => {
           if (state) {
-            // Convert string timestamps back to Date objects after rehydration
-            if (state.messages && state.messages.length > 0) {
-              state.messages = state.messages.map(message => ({
-                ...message,
-                timestamp: new Date(message.timestamp), // Ensure timestamp is a Date object
-              }));
-            }
+            // Mark store as initialized after rehydration
+            state.isInitialized = true;
             
-            // Clean old messages on rehydration
-            state.clearOldMessages?.();
+            // Attempt to sync any unsynced messages
+            const unsyncedMessages = state.messages.filter(msg => !msg.synced);
+            if (unsyncedMessages.length > 0) {
+              unsyncedMessages.forEach(async (message) => {
+                try {
+                  const synced = await ChatService.saveMessage(message);
+                  if (synced) {
+                    state.messages = state.messages.map(msg =>
+                      msg.id === message.id ? { ...msg, synced: true } : msg
+                    );
+                  }
+                } catch (error) {
+                  console.error('Failed to sync message:', message.id, error);
+                }
+              });
+            }
           }
-        },
+        }
       }
     ),
     {
