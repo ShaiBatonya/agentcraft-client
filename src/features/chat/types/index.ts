@@ -13,7 +13,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   createdAt: string;
-  threadId?: string;
+  threadId: string;
 }
 
 // Thread-related API response types
@@ -32,6 +32,7 @@ export interface SendMessageResponse {
 
 export interface ChatRequest {
   prompt: string;
+  threadId?: string;
 }
 
 export interface ChatResponse {
@@ -43,6 +44,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  threadId?: string;
   userId?: string; // User ID for namespacing messages
   synced?: boolean; // Whether message has been saved to backend
   error?: boolean; // Whether message failed to send
@@ -59,8 +61,6 @@ export interface MessageReaction {
   timestamp: Date;
 }
 
-
-
 export interface ChatState {
   messages: Message[];
   isLoading: boolean;
@@ -74,6 +74,7 @@ export interface ChatState {
 // Chat history request/response types
 export interface ChatHistoryRequest {
   userId?: string;
+  threadId?: string;
   limit?: number;
   before?: Date;
   after?: Date;

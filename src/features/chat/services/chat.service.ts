@@ -8,22 +8,14 @@ export class ChatService {
    */
   static async sendMessage(request: ChatRequest): Promise<ChatResponse> {
     try {
-  
-      
       // Use the centralized API service
-      const response = await apiService.chat.sendMessage(request.prompt);
-      
-
+      const response = await apiService.chat.sendMessage(request.threadId || '', request.prompt);
 
       // Transform backend response to frontend format
-      // Backend returns: { success: true, data: { reply: "..." } }
-      // Frontend expects: { response: "..." }
-      if (response.success && response.data?.reply) {
+      if (response.data?.messages?.assistantMessage?.content) {
         const transformedResponse: ChatResponse = {
-          response: response.data.reply
+          response: response.data.messages.assistantMessage.content
         };
-        
-  
         return transformedResponse;
       } else {
         console.error('❌ Chat Service: Invalid response format:', response);
@@ -51,52 +43,31 @@ export class ChatService {
   }
 
   /**
-   * Get chat history for the authenticated user from the last 7 days
+   * Get chat history for a thread
    */
   static async getChatHistory(params?: ChatHistoryRequest): Promise<Message[]> {
     try {
-  
+      // Get messages for the thread
+      const response = await apiService.chat.getMessages(params?.threadId || '');
       
-      // Calculate 7 days ago for filtering
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      // Try to get history from backend first
-      try {
-        const response = await apiService.chat.getHistory({
-          ...params,
-          after: sevenDaysAgo, // Only get messages from last 7 days
-          limit: params?.limit || 100,
-        });
+      if (response.data) {
+        // Transform backend messages to frontend format
+        const messages: Message[] = response.data.map((msg: Record<string, unknown>) => ({
+          id: msg._id as string,
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content as string,
+          timestamp: new Date(msg.createdAt as string), // Ensure timestamp is Date object
+          threadId: msg.threadId as string,
+          userId: msg.userId as string,
+          synced: true, // Messages from backend are already synced
+        }));
         
-        if (response.success && response.data?.messages) {
-    
-          
-          // Transform backend messages to frontend format
-          const messages: Message[] = response.data.messages.map((msg: Record<string, unknown>) => ({
-            id: msg.id as string,
-            role: msg.role as 'user' | 'assistant',
-            content: msg.content as string,
-            timestamp: new Date(msg.timestamp as string), // Ensure timestamp is Date object
-            userId: msg.userId as string,
-            synced: true, // Messages from backend are already synced
-          }));
-          
-          return messages;
-        }
-      } catch (backendError) {
-        console.warn('⚠️ Chat Service: Backend history unavailable, using local storage:', backendError);
+        return messages;
       }
-      
-      // Fallback: Return empty array if backend is unavailable
-      // The chat store will handle local persistence
 
       return [];
-      
     } catch (error) {
       console.error('❌ Chat Service: Failed to get chat history:', error);
-      
-      // Don't throw error for history loading - gracefully degrade
       console.warn('⚠️ Chat Service: History loading failed, continuing without history');
       return [];
     }
@@ -107,23 +78,8 @@ export class ChatService {
    */
   static async saveMessage(message: Message): Promise<boolean> {
     try {
-  
-      
-      const response = await apiService.chat.saveMessage({
-        id: message.id,
-        role: message.role,
-        content: message.content,
-        timestamp: message.timestamp,
-        userId: message.userId,
-      });
-      
-      if (response.success) {
-
-        return true;
-      } else {
-        console.warn('⚠️ Chat Service: Failed to save message:', response);
-        return false;
-      }
+      const response = await apiService.chat.sendMessage(message.threadId || '', message.content);
+      return response.status === 200;
     } catch (error) {
       console.error('❌ Chat Service: Failed to save message:', error);
       return false;
@@ -135,13 +91,9 @@ export class ChatService {
    */
   static async healthCheck(): Promise<{ status: string }> {
     try {
-  
-      
-      const response = await apiService.chat.healthCheck();
-  
-      
+      const response = await apiService.chat.test();
       return {
-        status: response.success ? 'healthy' : 'unhealthy'
+        status: response.status === 200 ? 'healthy' : 'unhealthy'
       };
     } catch (error) {
       console.error('❌ Chat Service: Health check failed:', error);
