@@ -1,73 +1,76 @@
 import { QueryClient } from '@tanstack/react-query';
 
-// Query client configuration
+// Performance-optimized query client configuration
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Stale time: how long data is considered fresh
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      // Aggressive caching for better performance
+      staleTime: 10 * 60 * 1000, // 10 minutes (data stays fresh longer)
+      gcTime: 30 * 60 * 1000, // 30 minutes (cache retention)
       
-      // Cache time: how long data stays in cache after being unused
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      // Reduce network requests
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: 'always',
+      refetchOnMount: false, // Don't refetch on every mount
       
-      // Retry configuration
+      // Smart retry logic
       retry: (failureCount, error: unknown) => {
         const apiError = error as { status?: number };
-        // Don't retry for authentication errors
+        
+        // Never retry auth errors
         if (apiError?.status === 401 || apiError?.status === 403) {
           return false;
         }
         
-        // Don't retry for client errors (4xx), but retry for server errors (5xx)
+        // Don't retry client errors (4xx)
         if (apiError?.status && apiError.status >= 400 && apiError.status < 500) {
           return false;
         }
         
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
+        // Retry server errors with exponential backoff (max 2 retries)
+        return failureCount < 2;
       },
       
-      // Retry delay with exponential backoff
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      
-      // Refetch configuration
-      refetchOnWindowFocus: false, // Don't refetch when window regains focus
-      refetchOnReconnect: true,    // Refetch when connection is restored
-      refetchOnMount: true,        // Refetch when component mounts
+      // Faster retry with exponential backoff
+      retryDelay: (attemptIndex) => Math.min(500 * 2 ** attemptIndex, 5000),
       
       // Error handling
-      throwOnError: false, // Don't throw errors, handle them in components
+      throwOnError: false,
+      
+      // Network mode for better offline handling
+      networkMode: 'online',
     },
     mutations: {
-      // Retry configuration for mutations
+      // Conservative retry for mutations
       retry: (failureCount, error: unknown) => {
         const apiError = error as { status?: number };
-        // Don't retry authentication errors
-        if (apiError?.status === 401 || apiError?.status === 403) {
-          return false;
-        }
         
-        // Don't retry client errors
+        // Never retry auth errors or client errors
         if (apiError?.status && apiError.status >= 400 && apiError.status < 500) {
           return false;
         }
         
-        // Retry once for server errors
+        // Only retry once for server errors
         return failureCount < 1;
       },
       
       // Error handling
       throwOnError: false,
+      
+      // Network mode
+      networkMode: 'online',
     },
   },
 });
 
-// Utility function to invalidate queries by pattern
+// Optimized utility functions
 export const invalidateQueries = (pattern: string[]) => {
-  return queryClient.invalidateQueries({ queryKey: pattern });
+  return queryClient.invalidateQueries({ 
+    queryKey: pattern,
+    refetchType: 'active' // Only refetch active queries
+  });
 };
 
-// Utility function to prefetch queries
 export const prefetchQuery = <T>(
   queryKey: string[],
   queryFn: () => Promise<T>,
@@ -76,21 +79,31 @@ export const prefetchQuery = <T>(
   return queryClient.prefetchQuery({
     queryKey,
     queryFn,
-    staleTime: options?.staleTime || 5 * 60 * 1000,
+    staleTime: options?.staleTime || 10 * 60 * 1000,
   });
 };
 
-// Utility function to set query data
 export const setQueryData = <T>(queryKey: string[], data: T) => {
   return queryClient.setQueryData(queryKey, data);
 };
 
-// Utility function to get query data
 export const getQueryData = <T>(queryKey: string[]): T | undefined => {
   return queryClient.getQueryData(queryKey);
 };
 
-// Utility function to clear all queries
-export const clearAllQueries = () => {
+// Cleanup utility for memory management
+export const clearQueryCache = () => {
   queryClient.clear();
-}; 
+};
+
+// Performance monitoring
+if (import.meta.env.DEV) {
+  queryClient.getQueryCache().subscribe((event) => {
+    if (event.type === 'added' || event.type === 'removed') {
+      const cacheSize = queryClient.getQueryCache().getAll().length;
+      if (cacheSize > 50) {
+        console.warn(`🐌 React Query cache has ${cacheSize} queries. Consider cleanup.`);
+      }
+    }
+  });
+} 
