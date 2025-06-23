@@ -1,9 +1,5 @@
 import { z } from 'zod';
 
-// Production API URL - use relative path for regular API calls (goes through proxy)
-// OAuth redirects will be handled separately with absolute URLs
-const PROD_API_URL = '/api';
-
 // Development API URL
 const DEV_API_URL = 'http://localhost:5000/api';
 
@@ -25,9 +21,12 @@ const env = envSchema.parse({
 
 // Export validated environment
 export const config = {
-  // If VITE_API_URL is not set, use the appropriate default based on mode
-  apiUrl: env.VITE_API_URL || (env.MODE === 'production' ? PROD_API_URL : DEV_API_URL),
-  // Backend URL for direct calls (OAuth, etc.) that cannot be proxied
+  // IMPORTANT: Render static sites don't support proxying to external services
+  // So in production, we must use the direct backend URL for all API calls
+  apiUrl: env.VITE_API_URL || (env.MODE === 'production' 
+    ? 'https://agentcraft-backend-1.onrender.com/api' 
+    : DEV_API_URL),
+  // Backend URL for direct calls (OAuth, etc.)
   backendUrl: env.MODE === 'production' 
     ? 'https://agentcraft-backend-1.onrender.com' 
     : `http://localhost:5000`,
@@ -45,4 +44,9 @@ if (env.MODE === 'development') {
     backendUrl: config.backendUrl,
     mode: env.MODE,
   });
+}
+
+// Production note: Direct backend URL used since Render static sites don't support proxying
+if (env.MODE === 'production') {
+  console.log('🌐 Production API calls will go directly to:', config.apiUrl);
 } 
