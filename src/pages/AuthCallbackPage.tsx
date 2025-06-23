@@ -14,33 +14,31 @@ export const AuthCallbackPage: React.FC = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        setStatus('Validating OAuth parameters...');
+        setStatus('Processing authentication...');
         
-        // Check for OAuth errors in URL
-        const oauthError = authService.getOAuthError();
-        if (oauthError) {
-          setError(getErrorMessage(oauthError));
-          setIsProcessing(false);
-          return;
-        }
-
-        // Check if we have OAuth parameters for state verification
+        // Check for error parameters in URL
         const urlParams = new URLSearchParams(window.location.search);
-        const hasOAuthParams = urlParams.has('code') || urlParams.has('state') || urlParams.has('error');
+        const errorParam = urlParams.get('error');
+        const messageParam = urlParams.get('message');
         
-        // Only verify state if we have OAuth parameters
-        if (hasOAuthParams && !authService.verifyOAuthState()) {
-          setError('Security validation failed. Please try logging in again.');
+        if (errorParam) {
+          const errorMessage = messageParam ? decodeURIComponent(messageParam) : errorParam;
+          setError(getErrorMessage(errorMessage));
           setIsProcessing(false);
           return;
         }
 
-        setStatus('Connecting to authentication server...');
+        // If we have a success parameter or no error, proceed to verify authentication
+        setStatus('Verifying authentication with server...');
         
-        // Implement enhanced polling mechanism
+        // Clean up URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Verify authentication via secure cookie
         await pollAuth();
         
-      } catch {
+      } catch (err) {
+        console.error('Auth callback error:', err);
         setError('Authentication failed. Please try again.');
         setIsProcessing(false);
       }
@@ -49,43 +47,50 @@ export const AuthCallbackPage: React.FC = () => {
     handleCallback();
   }, []);
 
-  // Enhanced polling mechanism: poll every 300ms, up to 5 times with better status updates
-  const pollAuth = async (retries = 5): Promise<void> => {
+  // Secure authentication verification: poll the secure cookie-based endpoint
+  const pollAuth = async (retries = 8): Promise<void> => {
     for (let i = 0; i < retries; i++) {
       setAttempts(i + 1);
       setStatus(`Verifying authentication (${i + 1}/${retries})...`);
       
       try {
+        // Wait a bit longer on first attempt to ensure cookie is set
+        if (i === 0) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
+        
         const user = await authService.getCurrentUser();
         if (user) {
           // Success! Update Zustand store and redirect
-          setStatus('Authentication successful! Redirecting...');
+          setStatus('Authentication successful! Redirecting to dashboard...');
           setUser(user);
-          authService.clearOAuthParams();
           
-          // Small delay to ensure state update is processed
-          await new Promise(resolve => setTimeout(resolve, 200));
+          // Clean up OAuth state
+          authService.cleanupOAuthState();
+          
+          // Small delay to show success message
+          await new Promise(resolve => setTimeout(resolve, 1000));
           navigate('/chat', { replace: true });
           return;
         }
-      } catch {
-        // Auth failed, continue polling
+      } catch (authError) {
+        console.log(`Auth attempt ${i + 1} failed:`, authError);
+        
+        // Auth failed, continue polling unless it's a permanent error
         if (i < retries - 1) {
-          setStatus(`Authentication check ${i + 1} failed, retrying...`);
+          setStatus(`Verification ${i + 1} failed, retrying...`);
         }
       }
       
-      // Wait 300ms before next attempt (except on last attempt)
+      // Wait 500ms before next attempt (except on last attempt)
       if (i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
     
-    // All retries exhausted - fallback
-    setStatus('Authentication failed, redirecting...');
-    authService.clearOAuthParams();
-    await new Promise(resolve => setTimeout(resolve, 500));
-    navigate('/', { replace: true });
+    // All retries exhausted - likely authentication failed
+    setError('Authentication verification failed. The login session may have expired.');
+    setIsProcessing(false);
   };
 
   // Enhanced loading screen that eliminates any flashing
@@ -205,14 +210,18 @@ export const AuthCallbackPage: React.FC = () => {
 // Helper function to get user-friendly error messages
 function getErrorMessage(error: string): string {
   switch (error) {
-    case 'authentication_failed':
-      return 'Google authentication was cancelled or failed. Please try signing in again.';
+    case 'oauth_failed':
+      return 'Google OAuth authentication failed. Please try signing in again.';
+    case 'no_user_data':
+      return 'No user data received from Google. Please try again or contact support.';
     case 'user_not_found':
       return 'Unable to create or find your user account. Please contact support if this persists.';
     case 'server_error':
       return 'A server error occurred during authentication. Please try again in a moment.';
     case 'access_denied':
       return 'Google access was denied. Please try again and approve the necessary permissions.';
+    case 'authentication_failed':
+      return 'Google authentication was cancelled or failed. Please try signing in again.';
     default:
       return `Authentication error: ${error}`;
   }

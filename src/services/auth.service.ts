@@ -49,6 +49,9 @@ export class AuthService {
   /**
    * Get Google OAuth URL with proper callback
    * OAuth redirects must go directly to backend - they cannot be proxied
+   * 
+   * Flow: Frontend → Backend OAuth → Google → Backend Callback → Frontend /auth/callback
+   * Security: JWT tokens are stored in HttpOnly cookies, never exposed in URLs
    */
   getGoogleOAuthUrl(): string {
     // For OAuth, we must use the absolute backend URL since browser redirects
@@ -59,7 +62,7 @@ export class AuthService {
     const state = Math.random().toString(36).substring(2, 15);
     localStorage.setItem('oauth_state', state);
     
-    console.log('🔗 OAuth URL:', oauthUrl);
+    console.log('🔗 Initiating secure OAuth flow to:', oauthUrl);
     return `${oauthUrl}?state=${state}`;
   }
 
@@ -80,25 +83,11 @@ export class AuthService {
   }
 
   /**
-   * Verify OAuth state for security
+   * Clean up OAuth state after successful authentication
+   * Note: State verification is handled by the backend in our secure flow
    */
-  verifyOAuthState(): boolean {
-    const urlParams = new URLSearchParams(window.location.search);
-    const returnedState = urlParams.get('state');
-    const storedState = localStorage.getItem('oauth_state');
-    
-    if (!returnedState || !storedState) {
-      return false;
-    }
-    
-    const isValid = returnedState === storedState;
-    
-    // Clean up stored state
-    if (isValid) {
-      localStorage.removeItem('oauth_state');
-    }
-    
-    return isValid;
+  cleanupOAuthState(): void {
+    localStorage.removeItem('oauth_state');
   }
 
   /**
