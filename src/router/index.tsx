@@ -124,7 +124,7 @@ export const router = createBrowserRouter([
   {
     path: '/chat',
     element: (
-      <PageWrapper>
+      <PageWrapper requireAuth>
         <ChatPage />
       </PageWrapper>
     ),
@@ -142,7 +142,7 @@ export const router = createBrowserRouter([
   {
     path: '/settings',
     element: (
-      <PageWrapper>
+      <PageWrapper requireAuth>
         <SettingsPage />
       </PageWrapper>
     ),

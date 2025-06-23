@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/shared/ui/Button';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { authService } from '@/services/auth.service';
 
 interface GoogleLoginButtonProps {
@@ -7,6 +8,7 @@ interface GoogleLoginButtonProps {
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   className?: string;
+  onLoginStart?: () => void;
 }
 
 export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
@@ -14,10 +16,28 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   size = 'lg',
   fullWidth = false,
   className = '',
+  onLoginStart,
 }) => {
-  const handleGoogleLogin = () => {
-    authService.initiateGoogleLogin();
-  };
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGoogleLogin = useCallback(async () => {
+    // Prevent multiple clicks
+    if (isLoading) return;
+    
+    try {
+      setIsLoading(true);
+      onLoginStart?.();
+      
+      // Small delay to show loading state before redirect
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Initiate OAuth redirect
+      authService.initiateGoogleLogin();
+    } catch (error) {
+      console.error('Login initiation failed:', error);
+      setIsLoading(false);
+    }
+  }, [isLoading, onLoginStart]);
 
   const GoogleIcon = () => (
     <svg
@@ -50,10 +70,11 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       variant={variant}
       size={size}
       fullWidth={fullWidth}
-      leftIcon={<GoogleIcon />}
-      className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${className}`}
+      disabled={isLoading}
+      leftIcon={isLoading ? <LoadingSpinner size="sm" /> : <GoogleIcon />}
+      className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${className}`}
     >
-      Continue with Google
+      {isLoading ? 'Redirecting to Google...' : 'Continue with Google'}
     </Button>
   );
 }; 

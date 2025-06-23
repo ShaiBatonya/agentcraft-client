@@ -8,6 +8,9 @@ export const AuthCallbackPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [status, setStatus] = useState<string>('Initializing authentication...');
+  const [errorType, setErrorType] = useState<'network' | 'auth' | 'timeout' | 'server' | 'unknown' | null>(null);
+  const [showRetryOptions, setShowRetryOptions] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const { setUser } = useAuthStore();
   const navigate = useNavigate();
 
@@ -23,7 +26,10 @@ export const AuthCallbackPage: React.FC = () => {
         
         if (errorParam) {
           const errorMessage = messageParam ? decodeURIComponent(messageParam) : errorParam;
-          setError(getErrorMessage(errorMessage));
+          const { message, type } = classifyError(errorMessage);
+          setError(message);
+          setErrorType(type);
+          setShowRetryOptions(type !== 'auth'); // Don't show retry for auth denial
           setIsProcessing(false);
           return;
         }
@@ -109,7 +115,10 @@ export const AuthCallbackPage: React.FC = () => {
     
     // All retries exhausted
     console.error('❌ All auth verification attempts failed');
-    setError('Authentication verification failed. The cookie may not have been set properly. Please try logging in again.');
+    const { message, type } = classifyError('timeout');
+    setError(message);
+    setErrorType(type);
+    setShowRetryOptions(true);
     setIsProcessing(false);
   };
 
@@ -173,8 +182,49 @@ export const AuthCallbackPage: React.FC = () => {
     );
   }
 
-  // Enhanced error state
+  // Enhanced error state with retry options
   if (error) {
+    const handleQuickRetry = () => {
+      setRetryCount(prev => prev + 1);
+      setError(null);
+      setErrorType(null);
+      setShowRetryOptions(false);
+      setIsProcessing(true);
+      setStatus('Retrying authentication...');
+      
+      // Restart the polling process
+      pollAuth();
+    };
+
+    const getErrorIcon = () => {
+      switch (errorType) {
+        case 'network':
+          return (
+            <svg className="w-8 h-8 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          );
+        case 'timeout':
+          return (
+            <svg className="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          );
+        case 'server':
+          return (
+            <svg className="w-8 h-8 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+            </svg>
+          );
+        default:
+          return (
+            <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          );
+      }
+    };
+
     return (
       <div 
         className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900"
@@ -187,28 +237,54 @@ export const AuthCallbackPage: React.FC = () => {
           zIndex: 9999
         }}
       >
-        <div className="text-center max-w-md mx-auto p-6">
+        <div className="text-center max-w-lg mx-auto p-6">
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-8 backdrop-blur-sm">
             <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
+              {getErrorIcon()}
             </div>
             <h1 className="text-2xl font-semibold text-red-400 mb-4">Authentication Failed</h1>
             <p className="text-white/80 mb-6 leading-relaxed">{error}</p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => navigate('/', { replace: true })}
-                className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3 rounded-lg transition-colors touch-optimized"
-              >
-                Return to Home
-              </button>
-              <button
-                onClick={() => window.location.href = '/login'}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-lg transition-colors touch-optimized"
-              >
-                Try Again
-              </button>
+            
+            {retryCount > 0 && (
+              <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <p className="text-yellow-400 text-sm">
+                  Retry attempt #{retryCount}
+                </p>
+              </div>
+            )}
+            
+            <div className="space-y-3">
+              {showRetryOptions && retryCount < 3 && (errorType === 'timeout' || errorType === 'network' || errorType === 'server') && (
+                <button
+                  onClick={handleQuickRetry}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-lg transition-colors mb-3 font-medium"
+                >
+                  🔄 Try Again ({3 - retryCount} attempts left)
+                </button>
+              )}
+              
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => navigate('/', { replace: true })}
+                  className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3 rounded-lg transition-colors"
+                >
+                  Return to Home
+                </button>
+                <button
+                  onClick={() => window.location.href = '/login'}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-lg transition-colors"
+                >
+                  {errorType === 'auth' ? 'Try Different Account' : 'Fresh Login'}
+                </button>
+              </div>
+              
+              {(errorType === 'server' || errorType === 'unknown') && (
+                <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-blue-400 text-xs">
+                    💡 If this issue persists, try clearing your browser cookies and cache, or contact support.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -227,22 +303,41 @@ export const AuthCallbackPage: React.FC = () => {
   );
 };
 
-// Helper function to get user-friendly error messages
-function getErrorMessage(error: string): string {
+// Enhanced error classification with retry guidance
+function classifyError(error: string): { message: string; type: 'network' | 'auth' | 'timeout' | 'server' | 'unknown' } {
   switch (error) {
     case 'oauth_failed':
-      return 'Google OAuth authentication failed. Please try signing in again.';
-    case 'no_user_data':
-      return 'No user data received from Google. Please try again or contact support.';
-    case 'user_not_found':
-      return 'Unable to create or find your user account. Please contact support if this persists.';
-    case 'server_error':
-      return 'A server error occurred during authentication. Please try again in a moment.';
     case 'access_denied':
-      return 'Google access was denied. Please try again and approve the necessary permissions.';
     case 'authentication_failed':
-      return 'Google authentication was cancelled or failed. Please try signing in again.';
+      return {
+        message: 'Google authentication was cancelled or denied. Please try signing in again and grant the necessary permissions.',
+        type: 'auth'
+      };
+    case 'no_user_data':
+    case 'user_not_found':
+      return {
+        message: 'Unable to retrieve your account information. This might be a temporary issue - please try again.',
+        type: 'server'
+      };
+    case 'server_error':
+      return {
+        message: 'A server error occurred during authentication. Please wait a moment and try again.',
+        type: 'server'
+      };
+    case 'timeout':
+      return {
+        message: 'Authentication is taking longer than expected. This could be due to network issues or server load.',
+        type: 'timeout'
+      };
+    case 'network':
+      return {
+        message: 'Unable to connect to the authentication server. Please check your internet connection and try again.',
+        type: 'network'
+      };
     default:
-      return `Authentication error: ${error}`;
+      return {
+        message: 'An unexpected error occurred during authentication. Please try again or contact support if the issue persists.',
+        type: 'unknown'
+      };
   }
 } 

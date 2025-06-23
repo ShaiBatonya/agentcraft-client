@@ -11,6 +11,13 @@ interface AuthState {
   isHydrated: boolean;
   error: string | null;
   lastActivity: number | null;
+  // Performance enhancements
+  userCache: {
+    data: User | null;
+    timestamp: number | null;
+    ttl: number; // Time to live in milliseconds
+  };
+  authCheckInProgress: boolean;
 }
 
 interface AuthActions {
@@ -39,6 +46,13 @@ export const useAuthStore = create<AuthStore>()(
         isHydrated: false,
         error: null,
         lastActivity: null,
+        // Performance enhancements
+        userCache: {
+          data: null,
+          timestamp: null,
+          ttl: 5 * 60 * 1000, // 5 minutes cache
+        },
+        authCheckInProgress: false,
 
         // Actions
         getCurrentUser: async () => {
@@ -158,6 +172,12 @@ export const useAuthStore = create<AuthStore>()(
         checkAuthStatus: async (skipCache = false) => {
           const state = get();
           
+          // Prevent duplicate requests
+          if (state.authCheckInProgress) {
+            console.log('🔍 Auth check already in progress, skipping...');
+            return;
+          }
+          
           // Skip check if already loading
           if (state.isLoading) {
             return;
@@ -166,6 +186,20 @@ export const useAuthStore = create<AuthStore>()(
           // For OAuth callbacks, always skip cache
           const isOAuthCallback = window.location.pathname === '/auth/callback';
           const shouldSkipCache = skipCache || isOAuthCallback;
+          
+          // Check cache first (unless skipping cache)
+          if (!shouldSkipCache && state.userCache.timestamp) {
+            const cacheAge = Date.now() - state.userCache.timestamp;
+            if (cacheAge < state.userCache.ttl && state.userCache.data) {
+              console.log('🚀 Using cached user data (age:', Math.round(cacheAge / 1000), 'seconds)');
+              set(state => {
+                state.user = state.userCache.data;
+                state.isAuthenticated = !!state.userCache.data;
+                state.lastActivity = Date.now();
+              });
+              return;
+            }
+          }
           
           // Skip check if recently checked (unless forced or OAuth callback)
           if (!shouldSkipCache && state.lastActivity && Date.now() - state.lastActivity < 30000) {
@@ -183,6 +217,7 @@ export const useAuthStore = create<AuthStore>()(
             set(state => {
               state.isLoading = true;
               state.error = null;
+              state.authCheckInProgress = true;
             });
             
             // Race between auth check and timeout
@@ -191,22 +226,46 @@ export const useAuthStore = create<AuthStore>()(
               timeoutPromise
             ]) as { isAuthenticated: boolean; user?: User };
             
+            const currentTime = Date.now();
+            
             set(state => {
               state.user = result.user || null;
               state.isAuthenticated = result.isAuthenticated;
               state.isLoading = false;
               state.error = null;
-              state.lastActivity = Date.now();
+              state.lastActivity = currentTime;
+              state.authCheckInProgress = false;
+              
+              // Update cache with fresh data
+              state.userCache = {
+                data: result.user || null,
+                timestamp: currentTime,
+                ttl: state.userCache.ttl,
+              };
             });
+            
+            console.log('✅ Auth check completed and cached');
           } catch (error) {
             // If auth check fails, user is not authenticated
+            const currentTime = Date.now();
+            
             set(state => {
               state.user = null;
               state.isAuthenticated = false;
               state.isLoading = false;
               state.error = null; // Don't show error for failed auth check
-              state.lastActivity = Date.now();
+              state.lastActivity = currentTime;
+              state.authCheckInProgress = false;
+              
+              // Clear cache on auth failure
+              state.userCache = {
+                data: null,
+                timestamp: currentTime,
+                ttl: state.userCache.ttl,
+              };
             });
+            
+            console.log('❌ Auth check failed, cache cleared');
             
             // Only throw if it's a real error, not auth failure
             if (error instanceof Error && !error.message.includes('not authenticated')) {
@@ -267,11 +326,12 @@ export const useAuthStore = create<AuthStore>()(
       {
         name: 'auth-store',
         version: 1,
-        // Only persist user and auth status, not loading/error states
+        // Only persist user and auth status, not loading/error states or cache
         partialize: (state) => ({
           user: state.user,
           isAuthenticated: state.isAuthenticated,
           lastActivity: state.lastActivity,
+          // Don't persist cache data to avoid stale data issues
         }),
         // Add migration function for version updates
         migrate: (persistedState) => {

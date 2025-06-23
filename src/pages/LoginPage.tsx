@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
+import { OAuthLoadingOverlay } from '@/components/auth/OAuthLoadingOverlay';
 import { useAuthStore } from '@/stores/auth.store';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
+  const [showOAuthLoading, setShowOAuthLoading] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -14,13 +16,30 @@ export const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  const handleLoginStart = () => {
+    setShowOAuthLoading(true);
+  };
+
+  const handleOAuthTimeout = () => {
+    setShowOAuthLoading(false);
+    // Could show an error toast here
+    console.warn('OAuth redirect timed out');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 flex items-center justify-center px-4">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
-      </div>
+    <>
+      {/* OAuth Loading Overlay */}
+      <OAuthLoadingOverlay
+        isVisible={showOAuthLoading}
+        onTimeout={handleOAuthTimeout}
+      />
+
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 flex items-center justify-center px-4">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        </div>
 
       <div className="relative w-full max-w-md">
         {/* Main Login Card */}
@@ -41,6 +60,7 @@ export const LoginPage: React.FC = () => {
               variant="secondary"
               size="lg"
               fullWidth
+              onLoginStart={handleLoginStart}
               className="bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-white/30"
             />
 
@@ -100,6 +120,7 @@ export const LoginPage: React.FC = () => {
           </Link>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }; 
