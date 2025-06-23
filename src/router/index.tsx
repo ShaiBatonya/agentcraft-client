@@ -5,6 +5,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { MainLayout } from '@/layout/MainLayout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { OAuthDebugPage } from '@/pages/OAuthDebugPage';
 
 // Lazy load all pages for better performance
 const HomePage = React.lazy(() => import('@/pages/HomePage'));
@@ -110,6 +111,15 @@ export const router = createBrowserRouter([
       </PageWrapper>
     ),
     errorElement: <PageErrorFallback error={new Error('Failed to load auth callback')} retry={() => window.location.reload()} />,
+  },
+  {
+    path: '/oauth-debug',
+    element: (
+      <PageWrapper>
+        <OAuthDebugPage />
+      </PageWrapper>
+    ),
+    errorElement: <PageErrorFallback error={new Error('Failed to load OAuth debug page')} retry={() => window.location.reload()} />,
   },
   {
     path: '/chat',
