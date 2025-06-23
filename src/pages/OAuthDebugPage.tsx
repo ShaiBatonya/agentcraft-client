@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuthActions } from '@/stores/auth.store';
-import type { User } from '@/types';
+import { useAuthActions, useAuthStore } from '@/stores/auth.store';
 
 export const OAuthDebugPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setUser } = useAuthActions();
+  const { checkAuthStatus } = useAuthActions();
+  const { isAuthenticated, user } = useAuthStore();
   const [debugInfo, setDebugInfo] = useState<{
     token?: string;
     error?: string;
     message?: string;
+    authCheckResult?: string;
+    cookies?: string;
   }>({});
 
   useEffect(() => {
@@ -18,28 +20,31 @@ export const OAuthDebugPage = () => {
     const token = searchParams.get('token') || undefined;
     const error = searchParams.get('error') || undefined;
     const message = searchParams.get('message') || undefined;
+    const cookies = document.cookie;
 
-    setDebugInfo({ token, error, message });
+    setDebugInfo({ token, error, message, cookies });
 
-    // If we have a token, try to use it
+    // If we have a token, test authentication immediately
     if (token) {
-      // Set temporary user while loading
-      const tempUser: User = {
-        id: 'temp',
-        name: 'Loading...',
-        email: 'loading@example.com',
-        role: 'user',
-        isAdmin: false
-      };
+      console.log('🔍 OAuth Debug: Token received, testing authentication...');
       
-      setUser(tempUser);
-      
-      // Wait a bit to show debug info, then redirect
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
+      // Test if the cookie was set properly by calling /auth/me
+      checkAuthStatus()
+        .then(() => {
+          console.log('✅ OAuth Debug: Authentication check successful');
+          setDebugInfo(prev => ({ ...prev, authCheckResult: 'success' }));
+          
+          // Wait a bit to show debug info, then redirect
+          setTimeout(() => {
+            navigate('/');
+          }, 3000);
+        })
+        .catch((error) => {
+          console.error('❌ OAuth Debug: Authentication check failed:', error);
+          setDebugInfo(prev => ({ ...prev, authCheckResult: `failed: ${error.message}` }));
+        });
     }
-  }, [searchParams, setUser, navigate]);
+  }, [searchParams, checkAuthStatus, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
@@ -50,16 +55,64 @@ export const OAuthDebugPage = () => {
         {debugInfo.token && (
           <div className="bg-green-900/50 border border-green-500 rounded-lg p-6 mb-6">
             <h2 className="text-green-400 text-lg font-semibold mb-2">
-              ✅ Authentication Successful
+              ✅ Authentication Token Received
             </h2>
             <p className="text-green-300 mb-4">
-              Token received and stored. Redirecting to home page...
+              Testing authentication with backend...
             </p>
+            
+            {/* Auth Status */}
+            <div className="mb-4 p-3 bg-black/30 rounded">
+              <p className="text-sm">
+                <span className="text-gray-400">Auth Status:</span>{' '}
+                <span className={isAuthenticated ? 'text-green-400' : 'text-yellow-400'}>
+                  {isAuthenticated ? '✅ Authenticated' : '⏳ Checking...'}
+                </span>
+              </p>
+              {user && (
+                <p className="text-sm mt-1">
+                  <span className="text-gray-400">User:</span>{' '}
+                  <span className="text-blue-400">{user.email}</span>
+                </p>
+              )}
+              {debugInfo.authCheckResult && (
+                <p className="text-sm mt-1">
+                  <span className="text-gray-400">Check Result:</span>{' '}
+                  <span className={debugInfo.authCheckResult === 'success' ? 'text-green-400' : 'text-red-400'}>
+                    {debugInfo.authCheckResult}
+                  </span>
+                </p>
+              )}
+            </div>
+            
+            {/* Cookies Debug */}
+            <div className="mb-4 p-3 bg-black/30 rounded">
+              <p className="text-sm">
+                <span className="text-gray-400">Cookies:</span>{' '}
+                <span className={debugInfo.cookies ? 'text-green-400' : 'text-red-400'}>
+                  {debugInfo.cookies ? 'Present' : 'None'}
+                </span>
+              </p>
+              {debugInfo.cookies && (
+                <p className="text-xs mt-1 font-mono text-gray-500 break-all">
+                  {debugInfo.cookies}
+                </p>
+              )}
+            </div>
+            
+            {/* Token Debug */}
             <div className="bg-black/50 p-4 rounded">
+              <p className="text-sm text-gray-400 mb-2">Token:</p>
               <p className="font-mono text-xs break-all">
                 {debugInfo.token}
               </p>
             </div>
+            
+            {isAuthenticated && (
+              <p className="text-green-300 mt-4">
+                ✅ Authentication successful! Redirecting to home page...
+              </p>
+            )}
           </div>
         )}
 
