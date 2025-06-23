@@ -1,0 +1,9 @@
+# Render Static Site Redirects/Rewrites
+# This file enables API calls to go through the same domain as the frontend
+# solving the Public Suffix List restriction on onrender.com
+
+# API proxy - rewrite all /api/* requests to the backend service
+/api/*  https://agentcraft-backend-1.onrender.com/api/:splat  200
+
+# SPA fallback - serve index.html for all other routes
+/*  /index.html  200 

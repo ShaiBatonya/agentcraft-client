@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Production API URL
-const PROD_API_URL = 'https://agentcraft-backend-1.onrender.com/api';
+// Production API URL - use relative path for rewrite proxy
+const PROD_API_URL = '/api';
 
 // Development API URL
 const DEV_API_URL = 'http://localhost:5000/api';
