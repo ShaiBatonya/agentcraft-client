@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { showToast } from '@/stores/toast.store';
 
 interface Props {
@@ -104,8 +104,6 @@ const getErrorSeverity = (error: Error): 'low' | 'medium' | 'high' | 'critical' 
 };
 
 export class ErrorBoundary extends Component<Props, State> {
-  private resetTimeoutId: number | null = null;
-  
   constructor(props: Props) {
     super(props);
     

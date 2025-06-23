@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Run TypeScript compilation check
+echo "📝 TypeScript compilation check..."
+cd client && pnpm tsc --noEmit
+
+# Run ESLint
+echo "🧹 ESLint check..."
+cd client && pnpm lint
+
+# Run build test (optional - can be time consuming)
+# echo "🏗️ Build test..."
+# cd client && pnpm build
+
+echo "✅ Pre-commit checks passed!" 
