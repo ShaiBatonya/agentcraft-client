@@ -4,6 +4,8 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/context/query.context'
 import './styles/global.css'
 import App from './App.tsx'
+import { Toaster } from 'react-hot-toast'
+import { toastConfig } from '@/stores/toast.store'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -20,6 +22,21 @@ createRoot(document.getElementById('root')!).render(
         </div>
       }>
         <App />
+        
+        {/* Professional Toast System */}
+        <Toaster
+          position={toastConfig.position}
+          toastOptions={{
+            ...toastConfig,
+            className: 'react-hot-toast',
+          }}
+          containerStyle={{
+            top: 80, // Account for header height
+            right: 16,
+            left: 16,
+            zIndex: 9999,
+          }}
+        />
       </Suspense>
     </QueryClientProvider>
   </StrictMode>,

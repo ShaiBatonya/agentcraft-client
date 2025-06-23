@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { router } from '@/router';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import PerformanceMonitor from '@/components/performance/PerformanceMonitor';
 import { useAuthStore, useAuthHydrated, useAuthLoading } from '@/stores/auth.store';
 import ToastContainer from '@/components/ui/ToastContainer';
 import { useToasts, useRemoveToast } from '@/stores/toast.store';
@@ -54,9 +55,30 @@ function App() {
   }
 
   return (
-    <ErrorBoundary>
-      <RouterProvider router={router} />
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+    <ErrorBoundary
+      enableRetry={true}
+      resetOnPropsChange={true}
+      onError={(error, errorInfo) => {
+        // Custom error handling - could send to analytics
+        console.error('App Error:', { error, errorInfo });
+      }}
+    >
+      <div className="app-root">
+        <RouterProvider router={router} />
+        
+        {/* Performance monitoring in development */}
+        <PerformanceMonitor 
+          enableLogging={true}
+          showOverlay={import.meta.env.DEV}
+          onMetricsUpdate={() => {
+            // Optional: Send metrics to analytics service
+            if (import.meta.env.PROD) {
+              // analytics.track('performance_metrics', metrics);
+            }
+          }}
+        />
+      </div>
+      <ToastContainer toasts={toasts.toasts || []} onRemove={removeToast} />
     </ErrorBoundary>
   );
 }
