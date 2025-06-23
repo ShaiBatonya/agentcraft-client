@@ -48,15 +48,18 @@ export class AuthService {
 
   /**
    * Get Google OAuth URL with proper callback
+   * OAuth redirects must go directly to backend - they cannot be proxied
    */
   getGoogleOAuthUrl(): string {
-    // Use the configured API URL
-    const oauthUrl = `${config.apiUrl}/auth/google`;
+    // For OAuth, we must use the absolute backend URL since browser redirects
+    // cannot go through frontend proxy rules
+    const oauthUrl = `${config.backendUrl}/api/auth/google`;
     
     // Add state parameter for CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
     localStorage.setItem('oauth_state', state);
     
+    console.log('🔗 OAuth URL:', oauthUrl);
     return `${oauthUrl}?state=${state}`;
   }
 

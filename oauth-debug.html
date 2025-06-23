@@ -84,7 +84,10 @@
   </div>
 
   <script>
-    const API_BASE = 'http://localhost:5000/api';
+    // Detect environment and set correct API base URL
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_BASE = isDevelopment ? 'http://localhost:5000/api' : '/api';
+    const BACKEND_BASE = isDevelopment ? 'http://localhost:5000' : 'https://agentcraft-backend-1.onrender.com';
     
     function log(message, type = 'info') {
       const logEl = document.getElementById('debug-log');
@@ -132,7 +135,8 @@
     function testGoogleLogin() {
       log('Initiating Google OAuth...');
       const callbackUrl = `${window.location.origin}/auth/callback`;
-      const oauthUrl = `${API_BASE.replace('/api', '')}/api/auth/google?callback=${encodeURIComponent(callbackUrl)}`;
+      // OAuth must go directly to backend, not through proxy
+      const oauthUrl = `${BACKEND_BASE}/api/auth/google?callback=${encodeURIComponent(callbackUrl)}`;
       log(`Redirecting to: ${oauthUrl}`);
       window.location.href = oauthUrl;
     }
@@ -198,7 +202,8 @@
     function updateUrls() {
       document.getElementById('current-url').textContent = window.location.href;
       const callbackUrl = `${window.location.origin}/auth/callback`;
-      const oauthUrl = `${API_BASE.replace('/api', '')}/api/auth/google?callback=${encodeURIComponent(callbackUrl)}`;
+      // OAuth URL goes directly to backend
+      const oauthUrl = `${BACKEND_BASE}/api/auth/google?callback=${encodeURIComponent(callbackUrl)}`;
       document.getElementById('oauth-url').textContent = oauthUrl;
       document.getElementById('callback-url').textContent = callbackUrl;
     }

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-// Production API URL - use relative path for rewrite proxy
+// Production API URL - use relative path for regular API calls (goes through proxy)
+// OAuth redirects will be handled separately with absolute URLs
 const PROD_API_URL = '/api';
 
 // Development API URL
@@ -26,6 +27,10 @@ const env = envSchema.parse({
 export const config = {
   // If VITE_API_URL is not set, use the appropriate default based on mode
   apiUrl: env.VITE_API_URL || (env.MODE === 'production' ? PROD_API_URL : DEV_API_URL),
+  // Backend URL for direct calls (OAuth, etc.) that cannot be proxied
+  backendUrl: env.MODE === 'production' 
+    ? 'https://agentcraft-backend-1.onrender.com' 
+    : `http://localhost:5000`,
   appName: env.VITE_APP_NAME,
   appVersion: env.VITE_APP_VERSION,
   isDevelopment: env.MODE === 'development',
@@ -37,6 +42,7 @@ export const config = {
 if (env.MODE === 'development') {
   console.log('📦 Environment:', {
     apiUrl: config.apiUrl,
+    backendUrl: config.backendUrl,
     mode: env.MODE,
   });
 } 
