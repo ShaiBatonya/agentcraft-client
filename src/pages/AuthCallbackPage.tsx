@@ -47,21 +47,31 @@ export const AuthCallbackPage: React.FC = () => {
     handleCallback();
   }, []);
 
-  // Secure authentication verification: poll the secure cookie-based endpoint
-  const pollAuth = async (retries = 8): Promise<void> => {
+  // Enhanced authentication verification with better error handling and debugging
+  const pollAuth = async (retries = 10): Promise<void> => {
+    console.log('🔍 Starting auth verification polling...');
+    
     for (let i = 0; i < retries; i++) {
       setAttempts(i + 1);
       setStatus(`Verifying authentication (${i + 1}/${retries})...`);
       
       try {
-        // Wait a bit longer on first attempt to ensure cookie is set
-        if (i === 0) {
-          await new Promise(resolve => setTimeout(resolve, 800));
-        }
+        // Progressive wait times: longer initial wait, then shorter intervals
+        const waitTime = i === 0 ? 1500 : i === 1 ? 1000 : 600;
+        console.log(`⏱️  Attempt ${i + 1}: Waiting ${waitTime}ms before auth check...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        
+        console.log(`🔍 Attempt ${i + 1}: Making auth request to /api/auth/me...`);
+        
+        // Check current cookies for debugging
+        const cookies = document.cookie;
+        console.log(`🍪 Current cookies: ${cookies || 'none'}`);
         
         const user = await authService.getCurrentUser();
+        
         if (user) {
           // Success! Update Zustand store and redirect
+          console.log('✅ Authentication successful!', user);
           setStatus('Authentication successful! Redirecting to dashboard...');
           setUser(user);
           
@@ -72,24 +82,34 @@ export const AuthCallbackPage: React.FC = () => {
           await new Promise(resolve => setTimeout(resolve, 1000));
           navigate('/chat', { replace: true });
           return;
+        } else {
+          console.log(`⚠️  Attempt ${i + 1}: No user data returned`);
         }
       } catch (authError) {
-        console.log(`Auth attempt ${i + 1} failed:`, authError);
+        const error = authError as Error & { status?: number; response?: { data?: unknown } };
+        console.error(`❌ Auth attempt ${i + 1} failed:`, {
+          message: error.message,
+          status: error.status,
+          response: error.response?.data
+        });
         
-        // Auth failed, continue polling unless it's a permanent error
+        // If it's a 401, the cookie might not be set yet - continue polling
+        // If it's a different error, log it but continue
         if (i < retries - 1) {
-          setStatus(`Verification ${i + 1} failed, retrying...`);
+          const remainingRetries = retries - i - 1;
+          setStatus(`Verification failed, ${remainingRetries} attempts remaining...`);
         }
       }
       
-      // Wait 500ms before next attempt (except on last attempt)
+      // Wait between attempts (except on last attempt)
       if (i < retries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
     
-    // All retries exhausted - likely authentication failed
-    setError('Authentication verification failed. The login session may have expired.');
+    // All retries exhausted
+    console.error('❌ All auth verification attempts failed');
+    setError('Authentication verification failed. The cookie may not have been set properly. Please try logging in again.');
     setIsProcessing(false);
   };
 

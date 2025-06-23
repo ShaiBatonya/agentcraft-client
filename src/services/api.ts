@@ -73,7 +73,16 @@ const offlineData: {
 // Request interceptor for debugging
 api.interceptors.request.use(
   (config) => {
-    // Only log errors and critical info
+    // Log auth-related requests for debugging
+    if (config.url?.includes('/auth/')) {
+      console.log(`🔍 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
+        withCredentials: config.withCredentials,
+        headers: {
+          'Content-Type': config.headers?.['Content-Type'],
+          'Cookie': document.cookie || 'none'
+        }
+      });
+    }
     return config;
   },
   (error) => {
@@ -85,17 +94,35 @@ api.interceptors.request.use(
 // Response interceptor for error handling and offline mode
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Only log errors and critical info
+    // Log auth-related responses for debugging
+    if (response.config.url?.includes('/auth/')) {
+      console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
+        status: response.status,
+        success: response.data?.success,
+        authenticated: response.data?.authenticated,
+        hasUserData: !!response.data?.data,
+        setCookie: response.headers['set-cookie']
+      });
+    }
     return response;
   },
   async (error: AxiosError) => {
+    // Log auth-related errors for debugging
+    if (error.config?.url?.includes('/auth/')) {
+      console.error(`❌ API Auth Error: ${error.config.method?.toUpperCase()} ${error.config.url}`, {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: (error.response?.data as { message?: string })?.message || error.message,
+        withCredentials: error.config.withCredentials
+      });
+    }
+    
     if (!error.response && (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK')) {
       console.warn('🔌 Server unreachable, enabling offline mode...');
       isOfflineMode = true;
       return handleOfflineRequest(error.config);
     }
     
-    console.error(`❌ API Error:`, error.message);
     return Promise.reject(error);
   }
 );

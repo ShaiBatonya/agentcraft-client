@@ -39,9 +39,14 @@ export class AuthService {
    */
   async checkAuthStatus(): Promise<{ isAuthenticated: boolean; user?: User }> {
     try {
+      console.log('🔍 AuthService: Checking authentication status...');
+      console.log('🍪 Current cookies:', document.cookie || 'none');
+      
       const user = await this.getCurrentUser();
+      console.log('✅ AuthService: Authentication successful', user);
       return { isAuthenticated: true, user };
-    } catch {
+    } catch (error) {
+      console.log('❌ AuthService: Authentication failed', error);
       return { isAuthenticated: false };
     }
   }
