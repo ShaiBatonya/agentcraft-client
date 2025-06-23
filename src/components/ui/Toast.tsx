@@ -71,10 +71,16 @@ const Toast: React.FC<ToastProps> = ({ toast, onRemove }) => {
   return (
     <div
       className={`
-        flex items-center gap-3 p-4 rounded-lg border backdrop-blur-sm shadow-lg
-        animate-in slide-in-from-right-full duration-300
+        flex items-center gap-3 p-4 rounded-xl border backdrop-blur-md shadow-2xl
+        transform transition-all duration-500 ease-out
+        animate-in slide-in-from-right-full fade-in
+        hover:scale-[1.02] hover:shadow-2xl
         ${getToastStyles(toast.type)}
       `}
+      style={{
+        animationDuration: '300ms',
+        animationTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
     >
       <div className="flex-shrink-0">
         {getIcon(toast.type)}

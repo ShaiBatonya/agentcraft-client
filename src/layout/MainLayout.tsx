@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
+import { useAuthToasts } from '@/stores/toast.store';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { user, isAuthenticated, logoutAndRedirect } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { showLogoutSuccess } = useAuthToasts();
+
+  const handleLogout = useCallback(async () => {
+    await logoutAndRedirect();
+    showLogoutSuccess();
+  }, [logoutAndRedirect, showLogoutSuccess]);
 
   // Enhanced navigation with better organization
   const navigation = useMemo(() => [
@@ -182,7 +189,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   
                   {/* Enhanced Logout Button - Desktop */}
                   <button
-                    onClick={() => logoutAndRedirect()}
+                    onClick={handleLogout}
                     className="hidden lg:flex items-center gap-2 px-3 py-2 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group"
                     title="Sign out"
                   >
@@ -230,10 +237,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
           </nav>
 
-          {/* Enhanced Mobile Menu */}
+          {/* Enhanced Mobile Menu with Fixed Background */}
           {isMobileMenuOpen && (
-            <div className="lg:hidden mt-4 pb-4 border-t border-white/10 pt-4 animate-fade-in-down">
-              <div className="space-y-2">
+            <>
+              {/* Backdrop overlay */}
+              <div 
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+                onClick={closeMobileMenu}
+              />
+              
+              {/* Mobile menu content */}
+              <div className="lg:hidden mt-4 pb-4 border-t border-white/10 pt-4 relative z-50 bg-slate-950/95 backdrop-blur-xl rounded-xl mx-4 shadow-2xl animate-fade-in-down">
+                <div className="space-y-2 px-4">
                 {/* Primary Navigation */}
                 {navigation.map((item) => (
                   <Link
@@ -300,7 +315,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       
                       <button
                         onClick={() => {
-                          logoutAndRedirect();
+                          handleLogout();
                           closeMobileMenu();
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group"
@@ -327,8 +342,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     </Link>
                   </>
                 )}
+                </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </header>

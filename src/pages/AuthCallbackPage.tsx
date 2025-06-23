@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { authService } from '@/services/auth.service';
+import { useAuthToasts } from '@/stores/toast.store';
 
 export const AuthCallbackPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(true);
@@ -13,6 +14,7 @@ export const AuthCallbackPage: React.FC = () => {
   const [retryCount, setRetryCount] = useState(0);
   const { setUser } = useAuthStore();
   const navigate = useNavigate();
+  const { showLoginSuccess, showLoginFailed, showAuthTimeout, showAuthDenied, showNetworkError, showServerError } = useAuthToasts();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -30,6 +32,22 @@ export const AuthCallbackPage: React.FC = () => {
           setError(message);
           setErrorType(type);
           setShowRetryOptions(type !== 'auth'); // Don't show retry for auth denial
+          
+          // Show appropriate toast notification
+          switch (type) {
+            case 'auth':
+              showAuthDenied();
+              break;
+            case 'network':
+              showNetworkError();
+              break;
+            case 'server':
+              showServerError();
+              break;
+            default:
+              showLoginFailed(message);
+          }
+          
           setIsProcessing(false);
           return;
         }
@@ -81,6 +99,9 @@ export const AuthCallbackPage: React.FC = () => {
           setStatus('Authentication successful! Redirecting to dashboard...');
           setUser(user);
           
+          // Show success toast
+          showLoginSuccess(user.name);
+          
           // Clean up OAuth state
           authService.cleanupOAuthState();
           
@@ -119,6 +140,10 @@ export const AuthCallbackPage: React.FC = () => {
     setError(message);
     setErrorType(type);
     setShowRetryOptions(true);
+    
+    // Show timeout toast
+    showAuthTimeout();
+    
     setIsProcessing(false);
   };
 

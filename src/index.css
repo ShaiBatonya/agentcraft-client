@@ -742,3 +742,10 @@ html {
     page-break-after: avoid;
   }
 }
+
+/* ========================================
+   MOBILE OPTIMIZATIONS
+   ======================================== */
+
+/* Import mobile-specific styles */
+@import './styles/mobile.css';
