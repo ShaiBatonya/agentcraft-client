@@ -1,5 +1,6 @@
 import { apiService, ApiError } from './api';
 import type { User } from '@/types';
+import { config } from '@/config/env';
 
 /**
  * Authentication Service
@@ -28,9 +29,9 @@ export class AuthService {
   async logout(): Promise<void> {
     try {
       await apiService.auth.logout();
-          } catch {
-        // Don't throw - logout should always succeed locally
-      }
+    } catch {
+      // Don't throw - logout should always succeed locally
+    }
   }
 
   /**
@@ -40,19 +41,17 @@ export class AuthService {
     try {
       const user = await this.getCurrentUser();
       return { isAuthenticated: true, user };
-          } catch {
-        return { isAuthenticated: false };
-      }
+    } catch {
+      return { isAuthenticated: false };
+    }
   }
 
   /**
    * Get Google OAuth URL with proper callback
    */
   getGoogleOAuthUrl(): string {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    
-    // Simplified URL construction - let the server handle the callback
-    const oauthUrl = `${apiUrl}/auth/google`;
+    // Use the configured API URL
+    const oauthUrl = `${config.apiUrl}/auth/google`;
     
     // Add state parameter for CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
@@ -137,12 +136,12 @@ export class AuthService {
         authenticated: response.data.authenticated,
         status: 'online'
       };
-          } catch {
-        return {
-          authenticated: false,
-          status: 'offline'
-        };
-      }
+    } catch {
+      return {
+        authenticated: false,
+        status: 'offline'
+      };
+    }
   }
 }
 

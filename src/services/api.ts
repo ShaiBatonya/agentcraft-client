@@ -8,10 +8,11 @@ import type {
 import {
   userSchema,
 } from '@/validation/schemas';
+import { config } from '@/config/env';
 
 // API Configuration
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: config.apiUrl,
   timeout: 15000,
   retries: 3,
   retryDelay: 1000,
