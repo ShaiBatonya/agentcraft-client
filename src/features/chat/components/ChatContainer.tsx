@@ -1,6 +1,12 @@
 // World-Class Responsive ChatContainer with advanced features and auto-scroll
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useChatInitialized, useInitializeChat } from '../store/chat.store';
+import {
+  useChatInitialized,
+  useInitializeChat,
+  useMessages,
+  useSetSearchResults
+} from '../store/chat.store';
+import type { SearchResult } from '../types';
 import { ChatCommandPalette } from './ChatCommandPalette';
 import { ChatError } from './ChatError';
 import { ChatHeader } from './ChatHeader';
@@ -19,6 +25,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = React.memo(({ classNa
   const [showCommands, setShowCommands] = useState(false);
   const isInitialized = useChatInitialized();
   const initializeChat = useInitializeChat();
+  const messages = useMessages();
+  const setSearchResults = useSetSearchResults();
 
   // Refs for click outside handling and focus management
   const searchRef = useRef<HTMLDivElement>(null);
@@ -160,6 +168,10 @@ export const ChatContainer: React.FC<ChatContainerProps> = React.memo(({ classNa
     }
   }, [showSearch, showSettings, showCommands, handleTabKey]);
 
+  const handleSearchResults = useCallback((results: SearchResult[]) => {
+    setSearchResults(results);
+  }, [setSearchResults]);
+
   return (
     <div
       className={`relative flex flex-col h-full bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 ${className}`}
@@ -212,7 +224,14 @@ export const ChatContainer: React.FC<ChatContainerProps> = React.memo(({ classNa
             ref={showSearch ? searchRef : showSettings ? settingsRef : commandsRef}
             className="w-full animate-in slide-in-from-bottom-4 duration-300"
           >
-            {showSearch && <ChatSearch onClose={() => setShowSearch(false)} />}
+            {showSearch && (
+              <ChatSearch
+                onClose={() => setShowSearch(false)}
+                messages={messages}
+                onSearchResults={handleSearchResults}
+                className="border-0 rounded-none"
+              />
+            )}
             {showSettings && <ChatSettings onClose={() => setShowSettings(false)} />}
             {showCommands && <ChatCommandPalette onClose={() => setShowCommands(false)} />}
           </div>

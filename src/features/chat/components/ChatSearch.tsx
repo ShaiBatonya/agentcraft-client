@@ -1,19 +1,21 @@
 // Professional chat search component with advanced filtering and real-time search
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSearchMessages, useSearchQuery, useSetSearchQuery, useSetSearchResults } from '../store/chat.store';
-import type { SearchFilters } from '../types';
+import { useSearchMessages, useSearchQuery, useSetSearchQuery } from '../store/chat.store';
+import type { Message, SearchFilters, SearchResult } from '../types';
 
 interface ChatSearchProps {
   onClose: () => void;
+  messages: Message[];
+  onSearchResults: (results: SearchResult[]) => void;
+  className?: string;
 }
 
 type FilterValue = string | boolean | Date | undefined;
 
-export const ChatSearch: React.FC<ChatSearchProps> = ({ onClose }) => {
+export const ChatSearch: React.FC<ChatSearchProps> = ({ onClose, onSearchResults, className }) => {
   const searchQuery = useSearchQuery();
   const setSearchQuery = useSetSearchQuery();
   const searchMessages = useSearchMessages();
-  const setSearchResults = useSetSearchResults();
 
   // Local state for filters
   const [filters, setFilters] = useState<SearchFilters>({
@@ -37,11 +39,11 @@ export const ChatSearch: React.FC<ChatSearchProps> = ({ onClose }) => {
   // Perform search when query or filters change
   useEffect(() => {
     const results = searchMessages(searchQuery, filters);
-    setSearchResults(results);
-  }, [searchQuery, filters, searchMessages, setSearchResults]);
+    onSearchResults(results);
+  }, [searchQuery, filters, searchMessages, onSearchResults]);
 
   return (
-    <div className="w-full max-w-2xl bg-white/5 rounded-2xl border border-white/10 backdrop-blur-xl p-6 space-y-6">
+    <div className={`w-full max-w-2xl bg-white/5 rounded-2xl border border-white/10 backdrop-blur-xl p-6 space-y-6 ${className || ''}`}>
       {/* Search Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Search Messages</h2>
