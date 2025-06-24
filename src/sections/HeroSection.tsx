@@ -1,6 +1,6 @@
+import { useAuthStore } from '@/stores/auth.store';
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/stores/auth.store';
 
 export const HeroSection: React.FC = React.memo(() => {
   const navigate = useNavigate();
@@ -15,9 +15,9 @@ export const HeroSection: React.FC = React.memo(() => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <section 
+    <section
       className="relative w-full min-h-screen overflow-hidden bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e] flex items-center"
-      style={{ 
+      style={{
         transform: 'translateZ(0)', // Hardware acceleration
         backfaceVisibility: 'hidden', // Reduce paint operations
         contentVisibility: 'auto',
@@ -49,21 +49,21 @@ export const HeroSection: React.FC = React.memo(() => {
             <span className="text-white/70 text-xs">Real-time</span>
           </div>
 
-          {/* Main Headline - Original Style Restored */}
-          <div className="space-y-4 sm:space-y-6">
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight tracking-tight text-white">
+          {/* Enhanced Main Headline */}
+          <div className="space-y-6 sm:space-y-8">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight tracking-tight text-white [text-wrap:balance]">
               Experience the Future of
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 [text-wrap:balance]">
                 AI Conversations
               </span>
             </h1>
-            
-            <p className="mx-auto max-w-3xl text-lg sm:text-xl md:text-2xl font-medium leading-relaxed text-slate-100 px-4 sm:px-0">
-              AgentCraft delivers a premium ChatGPT-like experience with intelligent thread management, 
+
+            <p className="mx-auto max-w-3xl text-lg sm:text-xl md:text-2xl font-medium leading-relaxed text-white [text-wrap:balance]">
+              AgentCraft delivers a premium ChatGPT-like experience with intelligent thread management,
               smart auto-scroll, and mobile-first design optimized for seamless conversations across all devices.
             </p>
-            
-            <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-slate-200 px-4 sm:px-0">
+
+            <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-white/90 [text-wrap:balance]">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 font-semibold">
                 Infinite possibilities, instant responses.
               </span>
@@ -83,7 +83,7 @@ export const HeroSection: React.FC = React.memo(() => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </button>
-              
+
               <button className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-xl transition-all duration-200 touch-optimized focus-optimized">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1M9 16v-2a4 4 0 118 0v2M12 3v1m6.364-.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -98,7 +98,7 @@ export const HeroSection: React.FC = React.memo(() => {
             <div className="relative">
               {/* Enhanced glow effect */}
               <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 blur-2xl sm:blur-3xl" />
-              
+
               <div className="relative aspect-video rounded-2xl sm:rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-black/20 p-1 sm:p-2 backdrop-blur-xl">
                 <div className="h-full w-full rounded-xl sm:rounded-2xl bg-gradient-to-br from-gray-900/50 to-black flex items-center justify-center overflow-hidden">
                   {/* Enhanced Mock Terminal/Chat Interface */}
@@ -116,7 +116,7 @@ export const HeroSection: React.FC = React.memo(() => {
                         <span className="sm:hidden">AgentCraft</span>
                       </div>
                     </div>
-                    
+
                     {/* Enhanced Chat Messages */}
                     <div className="space-y-3 sm:space-y-4">
                       <div className="flex items-start gap-2 sm:gap-3">
@@ -127,7 +127,7 @@ export const HeroSection: React.FC = React.memo(() => {
                           Hello! I'm your AI assistant. How can I help you today?
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start gap-2 sm:gap-3 justify-end">
                         <div className="max-w-xs sm:max-w-md text-right">
                           <div className="inline-block rounded-xl sm:rounded-2xl bg-indigo-500/20 px-3 sm:px-4 py-2 text-white/90 text-sm sm:text-base">
@@ -138,7 +138,7 @@ export const HeroSection: React.FC = React.memo(() => {
                           <span className="text-xs font-bold text-white/60">You</span>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start gap-2 sm:gap-3">
                         <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-bold text-indigo-400">AI</span>

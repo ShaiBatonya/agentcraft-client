@@ -60,9 +60,9 @@ export const FeaturesSection: React.FC = React.memo(() => {
   ];
 
   return (
-    <section 
+    <section
       className="relative w-full bg-gradient-to-b from-[#24243e] via-[#302b63] to-[#0f0c29] py-24 sm:py-32"
-      style={{ 
+      style={{
         transform: 'translateZ(0)',
         backfaceVisibility: 'hidden',
         contentVisibility: 'auto',
@@ -79,20 +79,20 @@ export const FeaturesSection: React.FC = React.memo(() => {
       <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="text-center space-y-4 sm:space-y-6 mb-16 sm:mb-20">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white [text-wrap:balance]">
             Powerful Features for
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 [text-wrap:balance]">
               Next-Generation AI
             </span>
           </h2>
-          <p className="mx-auto max-w-3xl text-lg sm:text-xl text-slate-300 leading-relaxed">
-            Experience the cutting edge of conversational AI with features designed for productivity, 
+          <p className="mx-auto max-w-3xl text-lg sm:text-xl text-white/90 leading-relaxed [text-wrap:balance]">
+            Experience the cutting edge of conversational AI with features designed for productivity,
             performance, and seamless user experience across all platforms.
           </p>
         </div>
 
         {/* Features grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {features.map((feature, index) => (
             <div
               key={index}
@@ -101,7 +101,7 @@ export const FeaturesSection: React.FC = React.memo(() => {
             >
               {/* Enhanced glow effect */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
+
               <div className="relative h-full rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-black/20 p-6 sm:p-8 backdrop-blur-xl transition-all duration-300 group-hover:border-white/20 group-hover:bg-gradient-to-br group-hover:from-white/10 group-hover:to-black/30">
                 {/* Icon */}
                 <div className="mb-4 sm:mb-6">
@@ -112,10 +112,10 @@ export const FeaturesSection: React.FC = React.memo(() => {
 
                 {/* Content */}
                 <div className="space-y-3 sm:space-y-4">
-                  <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-400 group-hover:to-purple-400 transition-all duration-300">
+                  <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-400 group-hover:to-purple-400 transition-all duration-300 [text-wrap:balance]">
                     {feature.title}
                   </h3>
-                  <p className="text-sm sm:text-base text-slate-300 leading-relaxed group-hover:text-slate-200 transition-colors duration-300">
+                  <p className="text-sm sm:text-base text-white/90 leading-relaxed group-hover:text-white transition-colors duration-300 [text-wrap:balance]">
                     {feature.description}
                   </p>
                 </div>
@@ -129,7 +129,7 @@ export const FeaturesSection: React.FC = React.memo(() => {
 
         {/* Bottom CTA */}
         <div className="text-center mt-16 sm:mt-20">
-          <p className="text-slate-400 text-sm sm:text-base mb-6">
+          <p className="text-white/80 text-sm sm:text-base mb-6 [text-wrap:balance]">
             Ready to experience the future of AI conversations?
           </p>
           <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
