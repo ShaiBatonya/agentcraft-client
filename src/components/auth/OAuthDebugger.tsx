@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/auth.store';
+import React, { useEffect, useState } from 'react';
 
 interface DebugInfo {
   currentUrl: string;
@@ -19,14 +19,14 @@ interface DebugInfo {
   timestamp: string;
 }
 
-export const OAuthDebugger: React.FC = () => {
+const OAuthDebugger: React.FC = React.memo(() => {
   const [debugInfo, setDebugInfo] = useState<Partial<DebugInfo>>({});
   const { isAuthenticated, user, checkAuthStatus } = useAuthStore();
 
   const updateDebugInfo = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const allParams = Object.fromEntries(urlParams.entries());
-    
+
     setDebugInfo({
       currentUrl: window.location.href,
       pathname: window.location.pathname,
@@ -82,7 +82,7 @@ export const OAuthDebugger: React.FC = () => {
           🔄
         </button>
       </div>
-      
+
       <div className="space-y-2 text-slate-300">
         <div>
           <span className="text-slate-400">Auth Status:</span>{' '}
@@ -90,22 +90,22 @@ export const OAuthDebugger: React.FC = () => {
             {isAuthenticated ? '✅ Authenticated' : '❌ Not authenticated'}
           </span>
         </div>
-        
+
         <div>
           <span className="text-slate-400">User:</span> {debugInfo.userEmail}
         </div>
-        
+
         <div>
           <span className="text-slate-400">Page:</span> {debugInfo.pathname}
         </div>
-        
+
         <div>
           <span className="text-slate-400">Is Callback:</span>{' '}
           <span className={debugInfo.isCallbackPage ? 'text-yellow-400' : 'text-slate-400'}>
             {debugInfo.isCallbackPage ? 'Yes' : 'No'}
           </span>
         </div>
-        
+
         {debugInfo.isCallbackPage && (
           <>
             <div>
@@ -114,14 +114,14 @@ export const OAuthDebugger: React.FC = () => {
                 {debugInfo.hasCode ? 'Yes' : 'No'}
               </span>
             </div>
-            
+
             <div>
               <span className="text-slate-400">Has State:</span>{' '}
               <span className={debugInfo.hasState ? 'text-green-400' : 'text-red-400'}>
                 {debugInfo.hasState ? 'Yes' : 'No'}
               </span>
             </div>
-            
+
             <div>
               <span className="text-slate-400">Has Error:</span>{' '}
               <span className={debugInfo.hasError ? 'text-red-400' : 'text-green-400'}>
@@ -130,7 +130,7 @@ export const OAuthDebugger: React.FC = () => {
             </div>
           </>
         )}
-        
+
         <div>
           <span className="text-slate-400">URL Params:</span>{' '}
           {Object.keys(debugInfo.urlParams || {}).length === 0 ? (
@@ -146,14 +146,14 @@ export const OAuthDebugger: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         {debugInfo.storedState && (
           <div>
             <span className="text-slate-400">Stored State:</span>{' '}
             <span className="text-yellow-400">{debugInfo.storedState.substring(0, 8)}...</span>
           </div>
         )}
-        
+
         <div>
           <span className="text-slate-400">Cookies:</span>{' '}
           {debugInfo.cookies ? (
@@ -163,7 +163,7 @@ export const OAuthDebugger: React.FC = () => {
           )}
         </div>
       </div>
-      
+
       <div className="flex gap-1 mt-3">
         <button
           onClick={handleTestLogin}
@@ -184,10 +184,14 @@ export const OAuthDebugger: React.FC = () => {
           Clear
         </button>
       </div>
-      
+
       <div className="text-xs text-slate-500 mt-2">
         Updated: {debugInfo.timestamp?.split('T')[1]?.split('.')[0]}
       </div>
     </div>
   );
-}; 
+});
+
+OAuthDebugger.displayName = 'OAuthDebugger';
+
+export default OAuthDebugger; 

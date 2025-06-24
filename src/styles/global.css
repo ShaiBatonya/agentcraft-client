@@ -168,3 +168,147 @@ body {
     @apply p-4 rounded-xl;
   }
 }
+
+/* Base styles */
+@layer base {
+  :root {
+    --gradient-from: theme('colors.indigo.600');
+    --gradient-to: theme('colors.purple.600');
+    --gradient-hover-from: theme('colors.indigo.500');
+    --gradient-hover-to: theme('colors.purple.500');
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased text-base;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Improved text balance */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p {
+    text-wrap: balance;
+  }
+}
+
+/* Custom utilities */
+@layer utilities {
+  /* Glass effects */
+  .glass-strong {
+    @apply bg-slate-900/80 backdrop-blur-xl backdrop-saturate-150;
+  }
+
+  .glass-light {
+    @apply bg-slate-900/60 backdrop-blur-lg backdrop-saturate-150;
+  }
+
+  /* Container utilities */
+  .container-nav {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .container-content {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Navigation styles */
+  .nav-link {
+    @apply flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all duration-200;
+  }
+
+  .nav-link-active {
+    @apply bg-white/10 text-white;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200;
+  }
+
+  .sidebar-item-active {
+    @apply bg-white/10 text-white;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200;
+    background: linear-gradient(to right, var(--gradient-from), var(--gradient-to));
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(to right, var(--gradient-hover-from), var(--gradient-hover-to));
+  }
+
+  /* Touch and focus optimizations */
+  .touch-optimized {
+    @apply touch-manipulation select-none;
+  }
+
+  .focus-optimized {
+    @apply focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:ring-offset-1 focus:ring-offset-slate-900;
+  }
+
+  /* Status indicators */
+  .status-online {
+    @apply flex items-center gap-2 px-3 py-1.5 text-emerald-400 bg-emerald-500/10 rounded-full;
+  }
+
+  /* Animations */
+  .hover-lift {
+    @apply hover:-translate-y-0.5 hover:shadow-lg;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-fade-in-down {
+    animation: fadeInDown 0.3s ease-out forwards;
+  }
+}
+
+/* Keyframes */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Safe area insets */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

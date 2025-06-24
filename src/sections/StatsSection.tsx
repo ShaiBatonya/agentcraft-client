@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const StatsSection: React.FC = React.memo(() => {
+const StatsSection: React.FC = React.memo(() => {
   const stats = [
     {
       number: '10k+',
@@ -110,4 +110,6 @@ export const StatsSection: React.FC = React.memo(() => {
   );
 });
 
-StatsSection.displayName = 'StatsSection'; 
+StatsSection.displayName = 'StatsSection';
+
+export default StatsSection; 

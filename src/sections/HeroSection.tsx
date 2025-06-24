@@ -51,19 +51,19 @@ export const HeroSection: React.FC = React.memo(() => {
 
           {/* Enhanced Main Headline */}
           <div className="space-y-6 sm:space-y-8">
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight tracking-tight text-white [text-wrap:balance]">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight tracking-tight text-white [text-wrap:balance] drop-shadow-lg">
               Experience the Future of
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 [text-wrap:balance]">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 [text-wrap:balance] mt-2 sm:mt-3">
                 AI Conversations
               </span>
             </h1>
 
-            <p className="mx-auto max-w-3xl text-lg sm:text-xl md:text-2xl font-medium leading-relaxed text-white [text-wrap:balance]">
+            <p className="mx-auto max-w-3xl text-lg sm:text-xl md:text-2xl font-medium leading-relaxed text-white/90 [text-wrap:balance] drop-shadow">
               AgentCraft delivers a premium ChatGPT-like experience with intelligent thread management,
               smart auto-scroll, and mobile-first design optimized for seamless conversations across all devices.
             </p>
 
-            <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-white/90 [text-wrap:balance]">
+            <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-white/90 [text-wrap:balance] drop-shadow">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 font-semibold">
                 Infinite possibilities, instant responses.
               </span>
@@ -72,11 +72,12 @@ export const HeroSection: React.FC = React.memo(() => {
           </div>
 
           {/* Enhanced CTA Buttons */}
-          <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 px-4 sm:px-0">
+          <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 px-4 sm:px-0 mt-8 sm:mt-10">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-lg sm:max-w-none">
               <button
                 onClick={handleGetStarted}
-                className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 touch-optimized focus-optimized"
+                className="group w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 touch-optimized focus-optimized"
+                aria-label="Start using AgentCraft"
               >
                 <span>Start Chatting</span>
                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,7 +85,10 @@ export const HeroSection: React.FC = React.memo(() => {
                 </svg>
               </button>
 
-              <button className="inline-flex items-center gap-2 px-6 py-3 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-xl transition-all duration-200 touch-optimized focus-optimized">
+              <button
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white rounded-xl transition-all duration-200 touch-optimized focus-optimized"
+                aria-label="Watch demo video"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1M9 16v-2a4 4 0 118 0v2M12 3v1m6.364-.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>

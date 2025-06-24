@@ -57,7 +57,9 @@
 }
 
 /* Prevent zoom on input focus (iOS Safari) */
-input, select, textarea {
+input,
+select,
+textarea {
   font-size: 16px;
 }
 
@@ -151,7 +153,7 @@ input, select, textarea {
     text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
   }
-  
+
   body {
     overflow-x: hidden;
   }
@@ -186,4 +188,143 @@ input, select, textarea {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-} 
+}
+
+/* Mobile-specific styles */
+@media (max-width: 640px) {
+  /* Improved touch targets */
+  button,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text zoom */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* Better spacing on mobile */
+  .container-nav {
+    @apply px-4;
+  }
+
+  .container-content {
+    @apply px-4;
+  }
+
+  /* Improved mobile navigation */
+  .nav-link {
+    @apply px-4 py-3;
+  }
+
+  .sidebar-item {
+    @apply px-4 py-3;
+  }
+
+  /* Mobile-optimized buttons */
+  .btn-primary {
+    @apply w-full justify-center;
+  }
+
+  /* Mobile-optimized text */
+  h1 {
+    @apply text-3xl !important;
+  }
+
+  h2 {
+    @apply text-2xl !important;
+  }
+
+  h3 {
+    @apply text-xl !important;
+  }
+
+  /* Mobile-optimized spacing */
+  .space-y-8 {
+    @apply space-y-6;
+  }
+
+  .space-y-12 {
+    @apply space-y-8;
+  }
+
+  .gap-8 {
+    @apply gap-6;
+  }
+
+  .gap-12 {
+    @apply gap-8;
+  }
+
+  /* Mobile-optimized padding */
+  .py-24 {
+    @apply py-16;
+  }
+
+  .py-32 {
+    @apply py-20;
+  }
+
+  .px-8 {
+    @apply px-6;
+  }
+
+  /* Mobile-optimized grid */
+  .grid-cols-3 {
+    @apply grid-cols-1;
+  }
+
+  .grid-cols-4 {
+    @apply grid-cols-2;
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+}
+
+/* Android-specific fixes */
+@supports not (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: 100vh;
+  }
+
+  .h-screen {
+    height: 100vh;
+  }
+}
+
+/* Notch and safe area handling */
+@supports (padding: max(0px)) {
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 1rem);
+  }
+
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  .safe-left {
+    padding-left: max(env(safe-area-inset-left), 1rem);
+  }
+
+  .safe-right {
+    padding-right: max(env(safe-area-inset-right), 1rem);
+  }
+}

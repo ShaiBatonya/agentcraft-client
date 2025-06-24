@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const FeaturesSection: React.FC = React.memo(() => {
+const FeaturesSection: React.FC = React.memo(() => {
   const features = [
     {
       icon: (
@@ -144,4 +144,6 @@ export const FeaturesSection: React.FC = React.memo(() => {
   );
 });
 
-FeaturesSection.displayName = 'FeaturesSection'; 
+FeaturesSection.displayName = 'FeaturesSection';
+
+export default FeaturesSection; 

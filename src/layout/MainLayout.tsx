@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth.store';
 import { useAuthToasts } from '@/stores/toast.store';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -20,20 +20,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   // Enhanced navigation with better organization
   const navigation = useMemo(() => [
-    { 
-      name: 'Home', 
-      href: '/', 
-      current: location.pathname === '/', 
+    {
+      name: 'Home',
+      href: '/',
+      current: location.pathname === '/',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m3 12 2-2m0 0 7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11 2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6" />
         </svg>
       )
     },
-    { 
-      name: 'Chat', 
-      href: '/chat', 
-      current: location.pathname === '/chat', 
+    {
+      name: 'Chat',
+      href: '/chat',
+      current: location.pathname === '/chat',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -43,21 +43,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   ], [location.pathname]);
 
   const secondaryNavigation = useMemo(() => [
-    { 
-      name: 'Profile', 
-      href: '/profile', 
-      current: location.pathname === '/profile', 
+    {
+      name: 'Profile',
+      href: '/profile',
+      current: location.pathname === '/profile',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
-      authRequired: true 
+      authRequired: true
     },
-    { 
-      name: 'Settings', 
-      href: '/settings', 
-      current: location.pathname === '/settings', 
+    {
+      name: 'Settings',
+      href: '/settings',
+      current: location.pathname === '/settings',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -65,10 +65,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </svg>
       )
     },
-    { 
-      name: 'Support', 
-      href: '/support', 
-      current: location.pathname === '/support', 
+    {
+      name: 'Support',
+      href: '/support',
+      current: location.pathname === '/support',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -78,9 +78,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   ], [location.pathname]);
 
   const closeMobileMenu = useCallback(() => setIsMobileMenuOpen(false), []);
-  
+
   // Enhanced user avatar with fallback
-  const userAvatarUrl = useMemo(() => 
+  const userAvatarUrl = useMemo(() =>
     user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=6366f1&color=fff&size=40`,
     [user?.avatar, user?.name]
   );
@@ -89,10 +89,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950">
       {/* Enhanced Glass Header */}
       <header className="sticky top-0 z-50 w-full border-b border-white/10 glass-strong safe-top">
-        <div className="container-nav py-3">
-          <nav className="flex items-center justify-between">
+        <div className="container-nav py-3 px-4 sm:px-6 lg:px-8">
+          <nav className="flex items-center justify-between gap-4">
             {/* Enhanced Logo */}
-            <Link to="/" className="flex items-center gap-3 group" onClick={closeMobileMenu}>
+            <Link to="/" className="flex items-center gap-3 group shrink-0" onClick={closeMobileMenu}>
               <div className="relative">
                 {/* Logo Icon with enhanced glow */}
                 <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-xl group-hover:shadow-indigo-500/30 transition-all duration-300 hover-lift">
@@ -103,7 +103,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {/* Animated glow effect */}
                 <div className="absolute inset-0 h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 opacity-0 blur-lg group-hover:opacity-50 transition-all duration-300" />
               </div>
-              
+
               {/* Brand Name */}
               <div className="hidden sm:block">
                 <span className="text-xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-400 group-hover:to-purple-400 transition-all duration-300">
@@ -114,18 +114,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </Link>
 
             {/* Enhanced Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-8 flex-1 justify-center">
               {/* Primary Navigation */}
               <div className="flex items-center gap-1">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`nav-link group relative ${
-                      item.current
-                        ? 'nav-link-active bg-white/10 text-white'
-                        : 'text-white/70 hover:text-white'
-                    }`}
+                    className={`nav-link group relative ${item.current
+                      ? 'nav-link-active bg-white/10 text-white'
+                      : 'text-white/70 hover:text-white'
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <span className={`transition-colors duration-200 ${item.current ? 'text-indigo-400' : 'group-hover:text-indigo-400'}`}>
@@ -133,7 +132,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       </span>
                       <span className="font-medium">{item.name}</span>
                     </div>
-                    
+
                     {/* Active indicator */}
                     {item.current && (
                       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" />
@@ -149,16 +148,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <div className="flex items-center gap-1">
                 {secondaryNavigation.map((item) => {
                   if (item.authRequired && !isAuthenticated) return null;
-                  
+
                   return (
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`nav-link group ${
-                        item.current
-                          ? 'nav-link-active bg-white/10 text-white'
-                          : 'text-white/70 hover:text-white'
-                      }`}
+                      className={`nav-link group ${item.current
+                        ? 'nav-link-active bg-white/10 text-white'
+                        : 'text-white/70 hover:text-white'
+                        }`}
                     >
                       <span className={`transition-colors duration-200 ${item.current ? 'text-indigo-400' : 'group-hover:text-indigo-400'}`}>
                         {item.icon}
@@ -171,7 +169,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </div>
 
             {/* Enhanced Auth & CTA Section */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0">
               {isAuthenticated ? (
                 <>
                   {/* Enhanced User Profile - Desktop */}
@@ -180,13 +178,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       src={userAvatarUrl}
                       alt={user?.name}
                       className="h-8 w-8 rounded-full border border-white/20 shadow-sm"
+                      loading="lazy"
                     />
                     <div className="flex flex-col min-w-0">
                       <span className="text-sm font-medium text-white truncate max-w-24">{user?.name}</span>
                       <span className="text-xs text-white/60 truncate max-w-24">{user?.email?.split('@')[0]}</span>
                     </div>
                   </div>
-                  
+
                   {/* Enhanced Logout Button - Desktop */}
                   <button
                     onClick={handleLogout}
@@ -213,19 +212,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   </Link>
                 </>
               )}
-              
+
               {/* Enhanced Chat CTA Button */}
               <Link to="/chat" onClick={closeMobileMenu}>
-                <button className="btn-primary text-sm px-5 py-2.5 min-h-[40px] group">
+                <button className="btn-primary text-sm px-4 sm:px-5 py-2.5 min-h-[40px] group whitespace-nowrap">
                   <svg className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <span>{isAuthenticated ? 'Chat' : 'Try AI'}</span>
+                  <span className="hidden sm:inline">{isAuthenticated ? 'Chat' : 'Try AI'}</span>
                 </button>
               </Link>
 
               {/* Enhanced Mobile Menu Button */}
-              <button 
+              <button
                 className="lg:hidden p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 touch-manipulation"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label="Toggle mobile menu"
@@ -241,107 +240,105 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {isMobileMenuOpen && (
             <>
               {/* Backdrop overlay */}
-              <div 
+              <div
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
                 onClick={closeMobileMenu}
               />
-              
+
               {/* Mobile menu content */}
               <div className="lg:hidden mt-4 pb-4 border-t border-white/10 pt-4 relative z-50 bg-slate-950/95 backdrop-blur-xl rounded-xl mx-4 shadow-2xl animate-fade-in-down">
                 <div className="space-y-2 px-4">
-                {/* Primary Navigation */}
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={closeMobileMenu}
-                    className={`sidebar-item ${
-                      item.current
-                        ? 'sidebar-item-active'
-                        : ''
-                    }`}
-                  >
-                    <span className={`${item.current ? 'text-indigo-400' : ''}`}>
-                      {item.icon}
-                    </span>
-                    <span>{item.name}</span>
-                  </Link>
-                ))}
-
-                {/* Divider */}
-                <div className="h-px bg-white/10 my-3" />
-
-                {/* Secondary Navigation */}
-                {secondaryNavigation.map((item) => {
-                  if (item.authRequired && !isAuthenticated) return null;
-                  
-                  return (
+                  {/* Primary Navigation */}
+                  {navigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
                       onClick={closeMobileMenu}
-                      className={`sidebar-item ${
-                        item.current
-                          ? 'sidebar-item-active'
-                          : ''
-                      }`}
+                      className={`sidebar-item ${item.current
+                        ? 'sidebar-item-active'
+                        : ''
+                        }`}
                     >
                       <span className={`${item.current ? 'text-indigo-400' : ''}`}>
                         {item.icon}
                       </span>
                       <span>{item.name}</span>
                     </Link>
-                  );
-                })}
+                  ))}
 
-                {/* Mobile Auth Section */}
-                {isAuthenticated ? (
-                  <>
-                    <div className="h-px bg-white/10 my-3" />
-                    
-                    {/* User Profile Card */}
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <img
-                          src={userAvatarUrl}
-                          alt={user?.name}
-                          className="h-10 w-10 rounded-full border border-white/20"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-white truncate">{user?.name}</div>
-                          <div className="text-xs text-white/60 truncate">{user?.email}</div>
-                        </div>
-                      </div>
-                      
-                      <button
-                        onClick={() => {
-                          handleLogout();
-                          closeMobileMenu();
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group"
+                  {/* Divider */}
+                  <div className="h-px bg-white/10 my-3" />
+
+                  {/* Secondary Navigation */}
+                  {secondaryNavigation.map((item) => {
+                    if (item.authRequired && !isAuthenticated) return null;
+
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        onClick={closeMobileMenu}
+                        className={`sidebar-item ${item.current
+                          ? 'sidebar-item-active'
+                          : ''
+                          }`}
                       >
-                        <svg className="w-4 h-4 group-hover:text-red-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        <span className={`${item.current ? 'text-indigo-400' : ''}`}>
+                          {item.icon}
+                        </span>
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
+
+                  {/* Mobile Auth Section */}
+                  {isAuthenticated ? (
+                    <>
+                      <div className="h-px bg-white/10 my-3" />
+
+                      {/* User Profile Card */}
+                      <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                        <div className="flex items-center gap-3 mb-3">
+                          <img
+                            src={userAvatarUrl}
+                            alt={user?.name}
+                            className="h-10 w-10 rounded-full border border-white/20"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-white truncate">{user?.name}</div>
+                            <div className="text-xs text-white/60 truncate">{user?.email}</div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            handleLogout();
+                            closeMobileMenu();
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 group"
+                        >
+                          <svg className="w-4 h-4 group-hover:text-red-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Sign Out
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-px bg-white/10 my-3" />
+                      <Link
+                        to="/login"
+                        onClick={closeMobileMenu}
+                        className="sidebar-item"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
-                        Sign Out
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="h-px bg-white/10 my-3" />
-                    <Link
-                      to="/login"
-                      onClick={closeMobileMenu}
-                      className="sidebar-item"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      Sign In
-                    </Link>
-                  </>
-                )}
+                        Sign In
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </>
@@ -371,11 +368,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   <div className="text-xs text-white/60">Neural AI Platform</div>
                 </div>
               </div>
-              
+
               <p className="text-white/70 leading-relaxed max-w-sm">
                 The next generation of AI conversation platforms. Built for creators, developers, and innovators who demand excellence.
               </p>
-              
+
               {/* Enhanced Social Links */}
               <div className="flex items-center gap-3">
                 {[
@@ -452,7 +449,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 <a href="#" className="hover:text-white transition-colors duration-300">Cookies</a>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2 text-sm">
               <div className="status-online">
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />

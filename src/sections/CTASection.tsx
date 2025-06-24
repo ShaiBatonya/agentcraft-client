@@ -2,7 +2,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export const CTASection: React.FC = React.memo(() => {
+const CTASection: React.FC = React.memo(() => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
 
@@ -125,4 +125,6 @@ export const CTASection: React.FC = React.memo(() => {
   );
 });
 
-CTASection.displayName = 'CTASection'; 
+CTASection.displayName = 'CTASection';
+
+export default CTASection; 
