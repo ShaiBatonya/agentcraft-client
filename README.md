@@ -1,243 +1,234 @@
-# 🤖 AgentCraft Frontend
+# AgentCraft: Neural AI Chat Platform
 
-A modern, responsive React frontend for the AgentCraft AI-powered chat application. Built with TypeScript, Tailwind CSS, and cutting-edge development tools for a scalable, maintainable codebase.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.0-blue.svg)](https://reactjs.org/)
+[![Express](https://img.shields.io/badge/Express-4.18-green.svg)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.0-green.svg)](https://www.mongodb.com/)
+[![Zustand](https://img.shields.io/badge/Zustand-4.4-purple.svg)](https://github.com/pmndrs/zustand)
+[![Vitest](https://img.shields.io/badge/Vitest-1.0-yellow.svg)](https://vitest.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
-## 📋 Description
+AgentCraft is a production-ready, full-stack AI chat platform built with modern web technologies. It delivers a premium ChatGPT-like experience with intelligent thread management, real-time synchronization, and mobile-first design.
 
-This frontend provides an intuitive and beautiful user interface for interacting with AI assistants. Features real-time chat, dark mode support, responsive design, and a modular architecture ready for future enhancements.
+🔗 [Live Demo](https://agentcraft-client-1.onrender.com/)
 
-## 🛠 Tech Stack
+![AgentCraft Preview](preview.png)
 
-- **Framework**: React 19 with TypeScript
-- **Build Tool**: Vite 6.x for lightning-fast development
-- **Styling**: Tailwind CSS 4.x with dark mode support
-- **State Management**: Zustand for simple, scalable state
-- **Routing**: React Router DOM with lazy loading
-- **HTTP Client**: Axios with interceptors
-- **Code Quality**: ESLint + Prettier + TypeScript strict mode
-- **Package Manager**: pnpm
+## 🌟 Key Features
 
-## 📁 Folder Structure
+- **Advanced Chat Experience**
+  - Real-time message synchronization
+  - Intelligent thread management
+  - Smart auto-scroll behavior
+  - Message search and filtering
+  - Export conversations (JSON, TXT, MD)
+
+- **Professional UI/UX**
+  - Mobile-first responsive design
+  - Glass morphism effects
+  - Smooth animations and transitions
+  - Dark mode support
+  - Touch-optimized interactions
+
+- **Enterprise-Grade Security**
+  - Google OAuth 2.0 integration
+  - JWT with HttpOnly cookies
+  - CORS protection
+  - Rate limiting
+  - XSS prevention
+
+- **Performance Optimized**
+  - Code splitting and lazy loading
+  - Image optimization
+  - Caching strategies
+  - Minimized bundle size
+  - Optimized API calls
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Core**: React 18, TypeScript 5
+- **State Management**: Zustand
+- **Styling**: Tailwind CSS, CSS Modules
+- **Routing**: React Router 6
+- **Build Tool**: Vite
+- **Testing**: Vitest, Testing Library
+- **Performance**: React Suspense, Code Splitting
+
+### Backend
+- **Runtime**: Node.js 18
+- **Framework**: Express 4
+- **Database**: MongoDB 6
+- **Authentication**: Passport.js, JWT
+- **API**: Google OAuth2, Gemini AI
+- **Testing**: Supertest, Jest
+- **Security**: Helmet, CORS, Rate Limiting
+
+## 🏗️ Architecture
 
 ```
-client/
-├── src/
-│   ├── app/                     # App-level providers and configuration
-│   ├── features/               # Feature-based modules
-│   │   └── chat/              # Chat feature
-│   │       ├── components/    # ChatBox, ChatMessage, ChatInput
-│   │       ├── pages/        # ChatPage
-│   │       ├── services/     # API services
-│   │       ├── store/        # Zustand store
-│   │       ├── types/        # TypeScript interfaces
-│   │       └── index.ts      # Feature exports
-│   ├── shared/               # Shared utilities and components
-│   │   ├── components/       # Reusable components
-│   │   ├── ui/              # UI primitives (Button, Input)
-│   │   ├── types/           # Global TypeScript types
-│   │   └── utils/           # Utility functions (API client)
-│   ├── layout/              # Layout components
-│   ├── pages/               # Page components (HomePage)
-│   ├── router/              # Router configuration
-│   ├── hooks/               # Custom React hooks
-│   ├── styles/              # Global styles and Tailwind config
-│   ├── App.tsx             # Root component
-│   └── main.tsx            # Application entry point
-├── .eslintrc.json          # ESLint configuration
-├── .prettierrc             # Prettier configuration
-├── tailwind.config.js      # Tailwind CSS configuration
-├── tsconfig.json           # TypeScript configuration
-├── vite.config.ts          # Vite configuration
-└── README.md              # Project documentation
+agentcraft/
+├── client/                 # Frontend React application
+│   ├── src/
+│   │   ├── app/           # App initialization
+│   │   ├── components/    # Reusable components
+│   │   ├── features/      # Feature modules
+│   │   ├── hooks/        # Custom React hooks
+│   │   ├── services/     # API services
+│   │   ├── stores/       # Zustand stores
+│   │   └── utils/        # Utility functions
+│   ├── public/           # Static assets
+│   └── tests/            # Frontend tests
+│
+├── server/                # Backend Express application
+│   ├── src/
+│   │   ├── config/       # Configuration
+│   │   ├── controllers/  # Route controllers
+│   │   ├── middleware/   # Custom middleware
+│   │   ├── models/       # MongoDB models
+│   │   ├── routes/       # API routes
+│   │   └── services/     # Business logic
+│   └── tests/            # Backend tests
+│
+├── docker/               # Docker configuration
+└── docs/                # Documentation
 ```
+
+## 🔐 Authentication Flow
+
+1. User initiates Google OAuth login
+2. Server validates OAuth tokens
+3. JWT generated and stored in HttpOnly cookie
+4. Secure session maintained with refresh tokens
+5. Automatic token refresh handling
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+- Node.js 18+
+- MongoDB 6+
+- pnpm (recommended) or npm
 
-- Node.js (v18 or higher)
-- pnpm package manager
-- AgentCraft backend running on port 5000
+### Local Development
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd client
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
-
-3. **Start the development server**
-   ```bash
-   pnpm dev
-   ```
-
-4. **Open your browser**
-   Navigate to `http://localhost:5173`
-
-The app will automatically connect to the backend API running on `http://localhost:5000/api`.
-
-## 📜 Available Scripts
-
-- `pnpm dev` - Start development server with hot reload
-- `pnpm build` - Build for production
-- `pnpm lint` - Run ESLint code analysis
-- `pnpm lint:fix` - Fix ESLint issues automatically
-- `pnpm format` - Format code with Prettier
-- `pnpm preview` - Preview production build locally
-
-## ✨ Features
-
-### 🎨 **Modern UI/UX**
-- Clean, responsive design that works on all devices
-- Dark/light mode toggle with system preference detection
-- Smooth animations and transitions
-- Accessible components with proper ARIA labels
-
-### 💬 **Chat Interface**
-- Real-time chat with AI assistant
-- Message history with timestamps
-- Auto-scroll to latest messages
-- Loading indicators and error handling
-- Keyboard shortcuts (Enter to send, Shift+Enter for new line)
-
-### ⚡ **Performance**
-- Lazy-loaded routes for optimal bundle splitting
-- Component-level code splitting
-- Optimized re-renders with proper state management
-- Fast refresh during development
-
-### 🧩 **Architecture**
-- Feature-based folder structure for scalability
-- Clean separation of concerns (components, services, stores)
-- TypeScript strict mode for type safety
-- Modular design ready for new features
-
-## 🎯 API Integration
-
-The frontend communicates with the backend through:
-
-- **Base URL**: `/api` (proxied to backend)
-- **Chat Endpoint**: `POST /api/chat`
-- **Health Check**: `GET /api/health`
-
-API client is pre-configured with:
-- Request/response interceptors
-- Error handling
-- Timeout configuration
-- Type-safe responses
-
-## 🎨 Theming
-
-### Dark Mode
-Toggle between light and dark themes with the button in the header. Theme preference is:
-- Saved to localStorage
-- Respects system preference on first visit
-- Applied instantly across all components
-
-### Customization
-Modify theme colors in `tailwind.config.js`:
-```js
-theme: {
-  extend: {
-    colors: {
-      // Add your custom colors here
-    }
-  }
-}
-```
-
-## 🔧 Development Guidelines
-
-### Component Structure
-```tsx
-// Component with proper TypeScript and documentation
-interface ComponentProps {
-  title: string;
-  onAction: () => void;
-}
-
-export const Component: React.FC<ComponentProps> = ({ title, onAction }) => {
-  return (
-    <div className="component-styles">
-      {/* Component content */}
-    </div>
-  );
-};
-```
-
-### State Management
-Use Zustand for feature-specific state:
-```tsx
-interface FeatureState {
-  data: Data[];
-  isLoading: boolean;
-}
-
-export const useFeatureStore = create<FeatureState>((set) => ({
-  data: [],
-  isLoading: false,
-  // actions here
-}));
-```
-
-### API Services
-Create typed API services:
-```tsx
-export class FeatureService {
-  static async getData(): Promise<DataResponse> {
-    const response = await api.get<DataResponse>('/feature/data');
-    return response.data;
-  }
-}
-```
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Set build command: `pnpm build`
-3. Set output directory: `dist`
-4. Deploy automatically on push
-
-### Netlify
-1. Connect repository to Netlify
-2. Build command: `pnpm build`
-3. Publish directory: `dist`
-4. Add environment variables if needed
-
-### Manual Deployment
+1. Clone the repository:
 ```bash
-pnpm build
-# Upload dist/ folder to your hosting provider
+git clone https://github.com/yourusername/agentcraft.git
+cd agentcraft
 ```
 
-## 🤝 Contributing
+2. Install dependencies:
+```bash
+# Install root dependencies
+pnpm install
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Follow the coding standards (ESLint + Prettier)
-4. Ensure TypeScript passes (`pnpm build`)
-5. Commit changes (`git commit -m 'feat: add amazing feature'`)
-6. Push to branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+# Install client dependencies
+cd client && pnpm install
 
-### Code Standards
-- Use TypeScript strict mode
-- Follow ESLint rules
-- Format with Prettier
-- Write descriptive commit messages
-- Add JSDoc comments for complex functions
+# Install server dependencies
+cd ../server && pnpm install
+```
+
+3. Set up environment variables:
+```bash
+# Client
+cp client/.env.example client/.env
+
+# Server
+cp server/.env.example server/.env
+```
+
+4. Start development servers:
+```bash
+# Start client (from client directory)
+pnpm dev
+
+# Start server (from server directory)
+pnpm dev
+```
+
+### Docker Development
+
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+```
+
+## 🧪 Testing Strategy
+
+- **Unit Tests**: Components, hooks, utilities
+- **Integration Tests**: API endpoints, authentication flow
+- **E2E Tests**: Critical user journeys
+- **Coverage**: Maintained at >80%
+
+Run tests:
+```bash
+# Client tests
+cd client && pnpm test
+
+# Server tests
+cd server && pnpm test
+
+# Coverage reports
+pnpm test:coverage
+```
+
+## 📦 Deployment
+
+The application is deployed on Render with the following configuration:
+
+### Frontend (Static Site)
+- Build Command: `cd client && pnpm install && pnpm build`
+- Output Directory: `client/dist`
+- Environment: Node 18
+- Auto Deploy: Yes
+
+### Backend (Web Service)
+- Build Command: `cd server && pnpm install`
+- Start Command: `cd server && pnpm start`
+- Environment: Node 18
+- Health Check: `/health`
+
+## 🔧 Best Practices
+
+- **Code Quality**
+  - ESLint + Prettier configuration
+  - TypeScript strict mode
+  - Consistent code style
+  - Comprehensive documentation
+
+- **Security**
+  - Regular dependency updates
+  - Security headers
+  - Input validation
+  - Error boundaries
+
+- **Performance**
+  - Lazy loading
+  - Image optimization
+  - Bundle size monitoring
+  - Performance monitoring
+
+- **DevOps**
+  - CI/CD pipeline
+  - Docker support
+  - Environment separation
+  - Automated testing
+
+## 👤 Author
+
+**Shai Batonya**
+- GitHub: [@ShaiBatonya](https://github.com/ShaiBatonya)
+- LinkedIn: [Shai Batonya](https://linkedin.com/in/shaibatonya)
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
----
+## 🙏 Acknowledgments
 
-**Built with ❤️ for modern web experiences**
+- [React Documentation](https://reactjs.org/)
+- [Express Documentation](https://expressjs.com/)
+- [MongoDB Documentation](https://docs.mongodb.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Google Cloud Platform](https://cloud.google.com/)
